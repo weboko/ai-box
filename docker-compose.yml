@@ -16,13 +16,13 @@ services:
     working_dir: /workspace
 
     environment:
-      HOME: /home/node
-      CODEX_HOME: /home/node/.codex
+      HOME: /root
+      CODEX_HOME: /root/.codex
       TERM: xterm-256color
 
     volumes:
       - ./context/AGENTS.md:/workspace/AGENTS.md:ro
-      - codex-home:/home/node
+      - codex-home:/root
       - codex-workspace:/workspace
 
     stop_grace_period: 20s
@@ -44,13 +44,13 @@ services:
     working_dir: /workspace
 
     environment:
-      HOME: /home/node
-      CLAUDE_CONFIG_DIR: /home/node/.claude
+      HOME: /root
+      CLAUDE_CONFIG_DIR: /root/.claude
       TERM: xterm-256color
 
     volumes:
       - ./context/CLAUDE.md:/workspace/CLAUDE.md:ro
-      - claude-home:/home/node
+      - claude-home:/root
       - claude-workspace:/workspace
 
     stop_grace_period: 20s

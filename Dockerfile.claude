@@ -41,8 +41,7 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         gh docker-ce-cli docker-buildx-plugin docker-compose-plugin nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl --proto '=https' --tlsv1.2 -sSf \
-      https://install.determinate.systems/nix | sh -s -- install linux \
+RUN curl -fsSL https://install.determinate.systems/nix | sh -s -- install linux \
       --no-confirm \
       --init none \
       --extra-conf "experimental-features = nix-command flakes" \
@@ -50,8 +49,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf \
       --extra-conf "extra-trusted-public-keys = public:l4HrXgL4nw246+LBh2SOJyhz64BoGegOYLheT/iIAPU= public:Z1wyVBEx8PHbXujYB52Mysv9Rd8rWIhyQ3bQyef9yy4=" \
       --extra-conf "fallback = true" \
       --extra-conf "max-jobs = auto" \
-      --extra-conf "sandbox = false" \
-    && chmod -R a+w /nix
+      --extra-conf "sandbox = false"
 ENV PATH=/nix/var/nix/profiles/default/bin:$PATH
 
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -62,8 +60,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     && rustup toolchain install 1.94.0 --profile default \
     && rustup toolchain install nightly --profile minimal --component rustfmt \
     && rustup component add clippy rustfmt \
-    && rustup target add wasm32-unknown-unknown \
-    && chmod -R a+w "$CARGO_HOME" "$RUSTUP_HOME"
+    && rustup target add wasm32-unknown-unknown
 
 ENV RISC0_HOME=/usr/local/risc0 \
     PATH=/usr/local/risc0/bin:$PATH
@@ -85,36 +82,21 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf \
         cargo-deny@0.20.2 \
         cargo-leptos
 
-RUN usermod --login node ubuntu \
-    && groupmod --new-name node ubuntu \
-    && usermod --home /home/node --move-home node
+RUN mkdir -p /workspace
 
-RUN mkdir -p /workspace \
-    && chown -R node:node /workspace /home/node
-
-USER node
-
-ENV HOME=/home/node
-ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV HOME=/root
+ENV PATH="/root/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
 RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && test -x /home/node/.local/bin/claude \
-    && /home/node/.local/bin/claude --version
+    && test -x /root/.local/bin/claude \
+    && /root/.local/bin/claude --version
 
-USER root
-
-RUN CLAUDE_BIN="$(readlink -f /home/node/.local/bin/claude)" \
+RUN CLAUDE_BIN="$(readlink -f /root/.local/bin/claude)" \
     && test -x "${CLAUDE_BIN}" \
     && install -m 0755 "${CLAUDE_BIN}" /usr/local/bin/claude \
     && /usr/local/bin/claude --version
 
-RUN chown -R node:node /home/node /workspace
-
-USER node
-
-ENV HOME=/home/node
-ENV CLAUDE_CONFIG_DIR=/home/node/.claude
-ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV CLAUDE_CONFIG_DIR=/root/.claude
 ENV TERM=xterm-256color
 
 WORKDIR /workspace

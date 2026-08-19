@@ -41,8 +41,7 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         gh docker-ce-cli docker-buildx-plugin docker-compose-plugin nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl --proto '=https' --tlsv1.2 -sSf \
-      https://install.determinate.systems/nix | sh -s -- install linux \
+RUN curl -fsSL https://install.determinate.systems/nix | sh -s -- install linux \
       --no-confirm \
       --init none \
       --extra-conf "experimental-features = nix-command flakes" \
@@ -50,8 +49,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf \
       --extra-conf "extra-trusted-public-keys = public:l4HrXgL4nw246+LBh2SOJyhz64BoGegOYLheT/iIAPU= public:Z1wyVBEx8PHbXujYB52Mysv9Rd8rWIhyQ3bQyef9yy4=" \
       --extra-conf "fallback = true" \
       --extra-conf "max-jobs = auto" \
-      --extra-conf "sandbox = false" \
-    && chmod -R a+w /nix
+      --extra-conf "sandbox = false"
 ENV PATH=/nix/var/nix/profiles/default/bin:$PATH
 
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -62,8 +60,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     && rustup toolchain install 1.94.0 --profile default \
     && rustup toolchain install nightly --profile minimal --component rustfmt \
     && rustup component add clippy rustfmt \
-    && rustup target add wasm32-unknown-unknown \
-    && chmod -R a+w "$CARGO_HOME" "$RUSTUP_HOME"
+    && rustup target add wasm32-unknown-unknown
 
 ENV RISC0_HOME=/usr/local/risc0 \
     PATH=/usr/local/risc0/bin:$PATH
@@ -85,36 +82,21 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf \
         cargo-deny@0.20.2 \
         cargo-leptos
 
-RUN usermod --login node ubuntu \
-    && groupmod --new-name node ubuntu \
-    && usermod --home /home/node --move-home node
+RUN mkdir -p /workspace
 
-RUN mkdir -p /workspace \
-    && chown -R node:node /workspace /home/node
-
-USER node
-
-ENV HOME=/home/node
-ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV HOME=/root
+ENV PATH="/root/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
 RUN curl -fsSL https://chatgpt.com/codex/install.sh | sh \
-    && test -x /home/node/.local/bin/codex \
-    && /home/node/.local/bin/codex --version
+    && test -x /root/.local/bin/codex \
+    && /root/.local/bin/codex --version
 
-USER root
-
-RUN CODEX_BIN="$(readlink -f /home/node/.local/bin/codex)" \
+RUN CODEX_BIN="$(readlink -f /root/.local/bin/codex)" \
     && test -x "${CODEX_BIN}" \
     && install -m 0755 "${CODEX_BIN}" /usr/local/bin/codex \
     && /usr/local/bin/codex --version
 
-RUN chown -R node:node /home/node /workspace
-
-USER node
-
-ENV HOME=/home/node
-ENV CODEX_HOME=/home/node/.codex
-ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV CODEX_HOME=/root/.codex
 ENV TERM=xterm-256color
 
 WORKDIR /workspace
