@@ -1,1 +1,5 @@
 .env
+claude-box/*
+!claude-box/.gitkeep
+codex-box/*
+!codex-box/.gitkeep

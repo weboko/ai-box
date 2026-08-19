@@ -13,17 +13,16 @@ services:
     stdin_open: true
     tty: true
 
-    working_dir: /workspace
+    working_dir: /codex-box
 
     environment:
-      HOME: /root
-      CODEX_HOME: /root/.codex
+      HOME: /codex-box
+      CODEX_HOME: /codex-box/.codex
       TERM: xterm-256color
 
     volumes:
-      - ./context/AGENTS.md:/workspace/AGENTS.md:ro
-      - codex-home:/root
-      - codex-workspace:/workspace
+      - ./codex-box:/codex-box
+      - ./context/AGENTS.md:/codex-box/.codex/AGENTS.md:ro
 
     stop_grace_period: 20s
 
@@ -41,29 +40,15 @@ services:
     stdin_open: true
     tty: true
 
-    working_dir: /workspace
+    working_dir: /claude-box
 
     environment:
-      HOME: /root
-      CLAUDE_CONFIG_DIR: /root/.claude
+      HOME: /claude-box
+      CLAUDE_CONFIG_DIR: /claude-box/.claude
       TERM: xterm-256color
 
     volumes:
-      - ./context/CLAUDE.md:/workspace/CLAUDE.md:ro
-      - claude-home:/root
-      - claude-workspace:/workspace
+      - ./claude-box:/claude-box
+      - ./context/CLAUDE.md:/etc/claude-code/CLAUDE.md:ro
 
     stop_grace_period: 20s
-
-volumes:
-  codex-home:
-    name: codex-home
-
-  codex-workspace:
-    name: codex-workspace
-
-  claude-home:
-    name: claude-home
-
-  claude-workspace:
-    name: claude-workspace

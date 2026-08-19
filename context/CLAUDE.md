@@ -1,1 +1,6 @@
-When you need to install a dependency to work on a project - you must do it without asking for confirmation. But ensure to write it down into a file in root of your user's folder with dependencies that you installed on your own.
+## Dependencies
+
+Install any dependency you need to work on a project without asking for confirmation.
+
+After each install, append a line to `$HOME/installed-dependencies.md` recording what you
+installed, the version, and why. Create the file if it does not exist.

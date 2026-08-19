@@ -82,23 +82,31 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf \
         cargo-deny@0.20.2 \
         cargo-leptos
 
-RUN mkdir -p /workspace
+RUN mkdir -p /claude-box
 
-ENV HOME=/root
-ENV PATH="/root/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV HOME=/claude-box
+RUN sed -i 's|^root:x:0:0:root:/root:|root:x:0:0:root:/claude-box:|' /etc/passwd \
+    && test "$(getent passwd root | cut -d: -f6)" = /claude-box
+
+ENV PATH="/claude-box/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
 RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && test -x /root/.local/bin/claude \
-    && /root/.local/bin/claude --version
+    && test -x /claude-box/.local/bin/claude \
+    && /claude-box/.local/bin/claude --version
 
-RUN CLAUDE_BIN="$(readlink -f /root/.local/bin/claude)" \
+# $HOME is bind-mounted at runtime and shadows whatever the installer put there.
+RUN CLAUDE_BIN="$(readlink -f /claude-box/.local/bin/claude)" \
     && test -x "${CLAUDE_BIN}" \
     && install -m 0755 "${CLAUDE_BIN}" /usr/local/bin/claude \
     && /usr/local/bin/claude --version
 
-ENV CLAUDE_CONFIG_DIR=/root/.claude
+ENV CLAUDE_CONFIG_DIR=/claude-box/.claude
 ENV TERM=xterm-256color
 
-WORKDIR /workspace
+COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/box-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
+
+WORKDIR /claude-box
 
 CMD ["claude", "remote-control", "--name", "claude-box"]

@@ -82,23 +82,31 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf \
         cargo-deny@0.20.2 \
         cargo-leptos
 
-RUN mkdir -p /workspace
+RUN mkdir -p /codex-box
 
-ENV HOME=/root
-ENV PATH="/root/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV HOME=/codex-box
+RUN sed -i 's|^root:x:0:0:root:/root:|root:x:0:0:root:/codex-box:|' /etc/passwd \
+    && test "$(getent passwd root | cut -d: -f6)" = /codex-box
+
+ENV PATH="/codex-box/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
 RUN curl -fsSL https://chatgpt.com/codex/install.sh | sh \
-    && test -x /root/.local/bin/codex \
-    && /root/.local/bin/codex --version
+    && test -x /codex-box/.local/bin/codex \
+    && /codex-box/.local/bin/codex --version
 
-RUN CODEX_BIN="$(readlink -f /root/.local/bin/codex)" \
+# $HOME is bind-mounted at runtime and shadows whatever the installer put there.
+RUN CODEX_BIN="$(readlink -f /codex-box/.local/bin/codex)" \
     && test -x "${CODEX_BIN}" \
     && install -m 0755 "${CODEX_BIN}" /usr/local/bin/codex \
     && /usr/local/bin/codex --version
 
-ENV CODEX_HOME=/root/.codex
+ENV CODEX_HOME=/codex-box/.codex
 ENV TERM=xterm-256color
 
-WORKDIR /workspace
+COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
+RUN chmod 0755 /usr/local/bin/box-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
+
+WORKDIR /codex-box
 
 CMD ["codex", "remote-control", "start"]
