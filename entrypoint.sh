@@ -11,4 +11,21 @@ for f in .bashrc .profile; do
   fi
 done
 
+# `claude rc` blocks on an interactive "Enable Remote Control? (y/n)" prompt unless this
+# flag is already set in the global config, which the empty bind mount does not carry.
+cfg_dir="${CLAUDE_CONFIG_DIR:-$HOME}"
+cfg="$cfg_dir/.claude.json"
+[ -f "$cfg_dir/.config.json" ] && cfg="$cfg_dir/.config.json"
+
+mkdir -p "$cfg_dir"
+[ -f "$cfg" ] || echo '{}' > "$cfg"
+
+tmp="$(mktemp)"
+if jq '.remoteDialogSeen = true' "$cfg" > "$tmp"; then
+  mv "$tmp" "$cfg"
+else
+  # Leave a malformed config untouched rather than truncating it.
+  rm -f "$tmp"
+fi
+
 exec "$@"
