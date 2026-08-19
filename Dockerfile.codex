@@ -39,18 +39,17 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         gh docker-ce-cli docker-buildx-plugin docker-compose-plugin nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-ENV NIX_INSTALLER_NO_MODIFY_PROFILE=1
-RUN mkdir -p /etc/nix \
-    && printf '%s\n' \
-        'experimental-features = nix-command flakes' \
-        'extra-substituters = https://cache.nix.logos.co/public' \
-        'extra-trusted-public-keys = public:l4HrXgL4nw246+LBh2SOJyhz64BoGegOYLheT/iIAPU= public:Z1wyVBEx8PHbXujYB52Mysv9Rd8rWIhyQ3bQyef9yy4=' \
-        'fallback = true' \
-        'max-jobs = auto' \
-        'sandbox = false' \
-        > /etc/nix/nix.conf \
-    && curl -L https://nixos.org/nix/install | sh -s -- --no-daemon
-ENV PATH=/root/.nix-profile/bin:$PATH
+RUN curl --proto '=https' --tlsv1.2 -sSf \
+      https://install.determinate.systems/nix | sh -s -- install linux \
+      --no-confirm \
+      --init none \
+      --extra-conf "experimental-features = nix-command flakes" \
+      --extra-conf "extra-substituters = https://cache.nix.logos.co/public" \
+      --extra-conf "extra-trusted-public-keys = public:l4HrXgL4nw246+LBh2SOJyhz64BoGegOYLheT/iIAPU= public:Z1wyVBEx8PHbXujYB52Mysv9Rd8rWIhyQ3bQyef9yy4=" \
+      --extra-conf "fallback = true" \
+      --extra-conf "max-jobs = auto" \
+      --extra-conf "sandbox = false"
+ENV PATH=/nix/var/nix/profiles/default/bin:$PATH
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
