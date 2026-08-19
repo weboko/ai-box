@@ -1,0 +1,69 @@
+services:
+  codex:
+    build:
+      context: .
+      dockerfile: Dockerfile.codex
+
+    container_name: codex-box
+    hostname: codex-box
+
+    restart: unless-stopped
+    init: true
+
+    stdin_open: true
+    tty: true
+
+    working_dir: /workspace
+
+    environment:
+      HOME: /home/node
+      CODEX_HOME: /home/node/.codex
+      TERM: xterm-256color
+
+    volumes:
+      - ./context/AGENTS.md:/workspace/AGENTS.md:ro
+      - codex-home:/home/node
+      - codex-workspace:/workspace
+
+    stop_grace_period: 20s
+
+  claude:
+    build:
+      context: .
+      dockerfile: Dockerfile.claude
+
+    container_name: claude-box
+    hostname: claude-box
+
+    restart: unless-stopped
+    init: true
+
+    stdin_open: true
+    tty: true
+
+    working_dir: /workspace
+
+    environment:
+      HOME: /home/node
+      CLAUDE_CONFIG_DIR: /home/node/.claude
+      TERM: xterm-256color
+
+    volumes:
+      - ./context/CLAUDE.md:/workspace/CLAUDE.md:ro
+      - claude-home:/home/node
+      - claude-workspace:/workspace
+
+    stop_grace_period: 20s
+
+volumes:
+  codex-home:
+    name: codex-home
+
+  codex-workspace:
+    name: codex-workspace
+
+  claude-home:
+    name: claude-home
+
+  claude-workspace:
+    name: claude-workspace
