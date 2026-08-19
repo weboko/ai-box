@@ -21,3 +21,14 @@ Once up, the session appears as `claude-box` in the Code tab at claude.ai/code a
 Claude mobile app.
 
 Sessions run with permissions fully bypassed and no prompts — the container is the sandbox.
+
+## Environment
+
+`.env` (gitignored, optional) is loaded into the container. Copy `.env.example` and fill in
+what you need — a `GH_TOKEN`, git identity, and so on. `HOME`, `CLAUDE_CONFIG_DIR` and `TERM`
+come from `docker-compose.yml` and win over anything set here.
+
+Do not put `ANTHROPIC_API_KEY` in it: Remote Control requires claude.ai subscription OAuth,
+and an API key overrides the stored login.
+
+Changes to `.env` need a recreate, not a restart: `docker compose up -d --force-recreate claude`.

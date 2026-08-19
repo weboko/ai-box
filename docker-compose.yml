@@ -42,6 +42,12 @@ services:
 
     working_dir: /claude-box
 
+    # Optional host secrets/config (gitignored, so absent on a fresh clone).
+    # Values here are overridden by the `environment:` block below.
+    env_file:
+      - path: .env
+        required: false
+
     environment:
       HOME: /claude-box
       CLAUDE_CONFIG_DIR: /claude-box/.claude
