@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git git-lfs curl wget ca-certificates gnupg bash openssh-client \
     ripgrep jq less procps psmisc lsof iproute2 tmux sudo \
     unzip zip xz-utils file locales lsb-release \
+    bubblewrap libseccomp2 uidmap dnsutils fd-find fzf netcat-openbsd rsync \
     build-essential gcc-14 g++-14 make cmake ninja-build pkg-config \
     autoconf automake libtool clang llvm libclang-dev \
     libssl-dev zlib1g-dev libzstd-dev liblz4-dev libsnappy-dev libbz2-dev \
@@ -18,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
     libdbus-1-3 fontconfig libfontconfig1 libfreetype6 libnss3 \
     xvfb x11-utils mesa-utils \
+    && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 \
@@ -48,7 +50,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf \
       --extra-conf "extra-trusted-public-keys = public:l4HrXgL4nw246+LBh2SOJyhz64BoGegOYLheT/iIAPU= public:Z1wyVBEx8PHbXujYB52Mysv9Rd8rWIhyQ3bQyef9yy4=" \
       --extra-conf "fallback = true" \
       --extra-conf "max-jobs = auto" \
-      --extra-conf "sandbox = false"
+      --extra-conf "sandbox = false" \
+    && chmod -R a+w /nix
 ENV PATH=/nix/var/nix/profiles/default/bin:$PATH
 
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -82,13 +85,17 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf \
         cargo-deny@0.20.2 \
         cargo-leptos
 
+RUN usermod --login node ubuntu \
+    && groupmod --new-name node ubuntu \
+    && usermod --home /home/node --move-home node
+
 RUN mkdir -p /workspace \
     && chown -R node:node /workspace /home/node
 
 USER node
 
 ENV HOME=/home/node
-ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
 RUN curl -fsSL https://claude.ai/install.sh | bash \
     && test -x /home/node/.local/bin/claude \
@@ -107,7 +114,7 @@ USER node
 
 ENV HOME=/home/node
 ENV CLAUDE_CONFIG_DIR=/home/node/.claude
-ENV PATH="/usr/local/bin:/home/node/.local/bin:/usr/bin:/bin"
+ENV PATH="/home/node/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 ENV TERM=xterm-256color
 
 WORKDIR /workspace
