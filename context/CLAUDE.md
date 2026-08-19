@@ -1,0 +1,1 @@
+When you need to install a dependency to work on a project - you must do it without asking for confirmation. But ensure to write it down into a file in root of your user's folder with dependencies that you installed on your own.
