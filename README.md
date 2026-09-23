@@ -53,10 +53,10 @@ if a run container is left behind, `docker compose ps -a` lists it and
 Prompts are read from the host on every run, so edits to `prompts/*.md` take effect
 immediately, with no rebuild.
 
-Every run shares `./claude-box` as `$HOME`/workspace with the remote-control daemon and with
-each other. Two runs at the same time (e.g. both scripts) may clone logos-docs into the same
-directory and interfere with each other. Run them one after another, or have the prompt clone
-into a directory of its own.
+Every run shares `./claude-box` as `$HOME` with the remote-control daemon and with other runs.
+Each prompt clones logos-docs into its own directory (`~/work/pr-review/`, `~/work/docs-review/`),
+so the two scripts can run at the same time. Two copies of the *same* script at once will
+still clash.
 
 ### Switching an existing clone to this branch
 
