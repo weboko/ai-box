@@ -1,6 +1,7 @@
 # ai-box
 
-Containers that run coding agents. `claude` is the maintained one.
+A container that runs Claude Code, plus one-command runners for the logos-docs dogfooding
+prompts in `prompts/`.
 
 ## Claude
 
@@ -21,6 +22,28 @@ Once up, the session appears as `claude-box` in the Code tab at claude.ai/code a
 Claude mobile app.
 
 Sessions run with permissions fully bypassed and no prompts — the container is the sandbox.
+
+## Dogfooding logos-docs
+
+| Command | Prompt |
+|---|---|
+| `./review-prs.sh` | `prompts/prs-review.md`: review and dogfood open PRs |
+| `./review-docs.sh` | `prompts/docs-grand-review.md`: dogfood every ready doc, open fix PRs |
+
+Both run `claude --dangerously-skip-permissions` with the prompt inside the `claude`
+container (a fresh `docker compose run`, alongside the remote-control daemon if it is up).
+
+Before the first run: build the image, log in (see above), and put a `GH_TOKEN` with write
+access to logos-co in `.env`.
+
+```bash
+./review-prs.sh                     # headless (claude -p), prints the final result
+./review-prs.sh -i                  # interactive TUI with the prompt already sent
+./review-prs.sh -- --output-format stream-json --verbose   # headless, stream progress
+```
+
+Anything after `--` is passed to `claude`. Any other prompt file can be run with
+`scripts/run-prompt.sh <file> [-i] [-- args]`.
 
 ## After pulling changes
 

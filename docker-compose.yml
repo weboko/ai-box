@@ -1,31 +1,4 @@
 services:
-  codex:
-    build:
-      context: .
-      dockerfile: Dockerfile.codex
-
-    container_name: codex-box
-    hostname: codex-box
-
-    restart: unless-stopped
-    init: true
-
-    stdin_open: true
-    tty: true
-
-    working_dir: /codex-box
-
-    environment:
-      HOME: /codex-box
-      CODEX_HOME: /codex-box/.codex
-      TERM: xterm-256color
-
-    volumes:
-      - ./codex-box:/codex-box
-      - ./context/AGENTS.md:/codex-box/.codex/AGENTS.md:ro
-
-    stop_grace_period: 20s
-
   claude:
     build:
       context: .
