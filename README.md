@@ -39,11 +39,17 @@ access to logos-co in `.env`.
 ```bash
 ./review-prs.sh                     # headless (claude -p), prints the final result
 ./review-prs.sh -i                  # interactive TUI with the prompt already sent
+./review-prs.sh -s                  # Sonnet 5 at high effort instead of Opus 5.5 at medium
 ./review-prs.sh -- --output-format stream-json --verbose   # headless, stream progress
 ```
 
-Anything after `--` is passed to `claude`. Any other prompt file can be run with
-`scripts/run-prompt.sh <file> [-i] [-- args]`.
+Runs use Opus 5.5 (`claude-opus-5-5`) at medium effort by default; `-s`/`--sonnet` switches
+to Sonnet 5 (`claude-sonnet-5`) at high effort. Flags combine (`-i -s`). Anything after `--`
+is passed to `claude` and wins over these defaults, e.g. `-- --effort high`. Any other prompt
+file can be run with `scripts/run-prompt.sh <file> [-i] [-s] [-- args]`.
+
+The model IDs and `--effort` need a recent Claude Code in the image. If a run fails with an
+unknown model or option, rebuild: `docker compose build --no-cache claude`.
 
 A headless run prints nothing until the agent finishes, which for these prompts can take
 hours. Use `stream-json` or `-i` if you want to watch it work. To stop a run, press Ctrl-C;
