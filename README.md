@@ -45,6 +45,30 @@ access to logos-co in `.env`.
 Anything after `--` is passed to `claude`. Any other prompt file can be run with
 `scripts/run-prompt.sh <file> [-i] [-- args]`.
 
+A headless run prints nothing until the agent finishes, which for these prompts can take
+hours. Use `stream-json` or `-i` if you want to watch it work. Ctrl-C stops the run and
+removes its container.
+
+Prompts are read from the host on every run, so edits to `prompts/*.md` take effect
+immediately, with no rebuild.
+
+Every run shares `./claude-box` as `$HOME`/workspace with the remote-control daemon and with
+each other. Two runs at the same time (e.g. both scripts) may clone logos-docs into the same
+directory and interfere with each other. Run them one after another, or have the prompt clone
+into a directory of its own.
+
+### Switching an existing clone to this branch
+
+This branch removes codex and stops tracking `.env`. On a clone that already had them:
+
+```bash
+cp .env .env.bak                      # checkout/pull deletes the formerly tracked .env
+git checkout weboko/logos-docs && git pull
+mv .env.bak .env
+docker compose down --remove-orphans  # stops the old codex-box container (restart: unless-stopped)
+rm -rf codex-box                      # its home dir is no longer gitignored
+```
+
 ## After pulling changes
 
 ```bash

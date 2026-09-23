@@ -38,10 +38,12 @@ fi
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+# The prompt goes before the extra args: variadic claude options such as --allowedTools or
+# --add-dir would otherwise swallow it as one of their values.
 if [ "$interactive" -eq 1 ]; then
   exec docker compose run --rm claude \
-    claude --dangerously-skip-permissions ${extra[@]+"${extra[@]}"} "$prompt"
+    claude --dangerously-skip-permissions "$prompt" ${extra[@]+"${extra[@]}"}
 else
   exec docker compose run --rm -T claude \
-    claude -p --dangerously-skip-permissions ${extra[@]+"${extra[@]}"} "$prompt"
+    claude -p --dangerously-skip-permissions "$prompt" ${extra[@]+"${extra[@]}"}
 fi
