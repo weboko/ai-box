@@ -46,8 +46,9 @@ Anything after `--` is passed to `claude`. Any other prompt file can be run with
 `scripts/run-prompt.sh <file> [-i] [-- args]`.
 
 A headless run prints nothing until the agent finishes, which for these prompts can take
-hours. Use `stream-json` or `-i` if you want to watch it work. Ctrl-C stops the run and
-removes its container.
+hours. Use `stream-json` or `-i` if you want to watch it work. To stop a run, press Ctrl-C;
+if a run container is left behind, `docker compose ps -a` lists it and
+`docker rm -f <name>` removes it.
 
 Prompts are read from the host on every run, so edits to `prompts/*.md` take effect
 immediately, with no rebuild.
@@ -63,6 +64,7 @@ This branch removes codex and stops tracking `.env`. On a clone that already had
 
 ```bash
 cp .env .env.bak                      # checkout/pull deletes the formerly tracked .env
+git checkout -- .env                  # otherwise git refuses to switch if it has local edits
 git checkout weboko/logos-docs && git pull
 mv .env.bak .env
 docker compose down --remove-orphans  # stops the old codex-box container (restart: unless-stopped)
