@@ -2,15 +2,15 @@ You are dogfooding the documentation in https://github.com/logos-co/logos-docs: 
 
 ## Environment
 
-You are in a disposable Ubuntu 24.04 container, running as root, with permissions bypassed. Rust, Nix, the RISC Zero toolchain, `gh` and common build tools are preinstalled. Install anything else a doc needs without asking. Work in `~/work/docs-review/` (clone the repo there) so you don't collide with other runs sharing this home directory.
+You are in a disposable Ubuntu 24.04 container, running as root, with permissions bypassed. Rust, Nix, the RISC Zero toolchain, `gh` and common build tools are preinstalled. Install anything else a doc needs without asking. Work in `~/work/docs-review/` so you don't collide with other runs sharing this home directory. Clone the repo there, or fetch and reset the existing clone if an earlier run left one.
 
-GitHub access is through the `GH_TOKEN` environment variable, which `gh` picks up automatically. Run `gh auth setup-git` so that `git push` uses it too. Use `gh` for everything on GitHub. If a push or PR creation fails with a 401/403 or "Resource not accessible", stop and report it in your final summary rather than looking for another way in; it means the token lacks a permission a human has to grant.
+GitHub access is through the `GH_TOKEN` environment variable, which `gh` picks up automatically. Run `gh auth setup-git` so that `git push` uses it too. Use `gh` for everything on GitHub. If you can't push branches to `logos-co/logos-docs`, fork it (`gh repo fork --remote`), push to the fork and open the PRs from there. That's the normal contributor path, not a workaround. If a push or PR creation fails with a 401/403 or "Resource not accessible", stop and report it in your final summary rather than looking for another way in; it means the token lacks a permission a human has to grant. Never print the token or write it into files, commits or comments.
 
 ## Scope
 
-Figure out whether the repo marks docs as ready (for example a label, a front-matter status field, or a checklist entry). If it does, cover only the ready docs. If it doesn't, cover all of them. Before you start, write out the list of docs you'll cover, grouped by section, and work through it in order so nothing gets skipped.
+Figure out whether the repo marks docs as ready (for example a label, a front-matter status field, or a checklist entry). If it does, cover only the ready docs. If it doesn't, cover all of them. Before you start, write the list of docs you'll cover, grouped by section, to `~/work/docs-review/PROGRESS.md`, and work through it in order so nothing gets skipped. After each doc, update its entry with its status, what you found, and the PR link once there is one. This run is long; the file is how you keep your place if your context gets compacted or the run restarts. If the file already exists when you start, resume from it rather than starting over.
 
-Before working on a section, check the open PRs. If one already fixes an issue you would fix, leave that issue out of your PR.
+Before working on a section, check the open PRs, including ones you opened on an earlier run. If one already fixes an issue you would fix, leave that issue out of your PR.
 
 ## How to dogfood a doc
 
@@ -18,7 +18,7 @@ Before working on a section, check the open PRs. If one already fixes an issue y
 2. When a step fails, find the root cause and get it working, so you can keep going and reach the end. Then decide where the fault lies:
    - **The doc**: a wrong command, missing step, missing prerequisite, wrong order, missing version pin, a stale path, or a step so unclear that it caused the failure. Fix it in the doc.
    - **This container** (for example, being root or having no GUI): work around it and note it in your summary, but don't change the doc for it.
-3. After making fixes, run the doc again from a clean state (a fresh clone or build directory) to confirm it now works start to finish.
+3. After making fixes, run the doc again from a clean state to confirm it now works start to finish. The project checkout, build directories and anything earlier steps created should be fresh. Toolchains and package caches (Cargo, the Nix store) can stay, since a reader who installed the prerequisites would have them too.
 
 ## Pull requests
 
