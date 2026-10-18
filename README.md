@@ -61,6 +61,7 @@ Sessions run with approvals and Codex's sandbox disabled (`/etc/codex/managed_co
 | Log in to Codex (once per host) | `./box run --rm box codex login --device-auth` |
 | Run | `./box up -d box` |
 | Logs | `./box logs -f box` |
+| Codex pairing code | `./box exec box codex remote-control pair` |
 | Restart | `./box restart box` |
 | Rebuild + run | `./box up -d --build box` |
 | Shell | `./box run --rm box bash` |
