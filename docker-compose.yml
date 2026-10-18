@@ -15,6 +15,12 @@ services:
 
     working_dir: /codex-box
 
+    # Optional host secrets/config (gitignored, so absent on a fresh clone).
+    # Values here are overridden by the `environment:` block below.
+    env_file:
+      - path: .env
+        required: false
+
     environment:
       HOME: /codex-box
       CODEX_HOME: /codex-box/.codex
