@@ -15,7 +15,13 @@ ENV HOME=/codex-box
 RUN sed -i 's|^root:x:0:0:root:/root:|root:x:0:0:root:/codex-box:|' /etc/passwd \
     && test "$(getent passwd root | cut -d: -f6)" = /codex-box
 
-ENV PATH="/codex-box/.local/bin:/usr/local/bin:/usr/bin:/bin"
+# Nix, Rust, cargo tools and RISC0 are installed on demand by prime-box (see README), not at
+# build time. These locations are set up front so tools resolve as soon as it has run.
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    RISC0_HOME=/usr/local/risc0
+
+ENV PATH="/codex-box/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # $HOME is bind-mounted at runtime and shadows anything installed under it, so install the
 # whole package (binary plus its bundled helpers) outside it and link codex onto PATH.
@@ -34,7 +40,8 @@ RUN mkdir -p /etc/codex \
 
 COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
 COPY codex-daemon.sh /usr/local/bin/codex-daemon.sh
-RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/codex-daemon.sh
+COPY prime-box.sh /usr/local/bin/prime-box
+RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/codex-daemon.sh /usr/local/bin/prime-box
 ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
 
 WORKDIR /codex-box

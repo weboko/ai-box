@@ -11,6 +11,10 @@ for f in .bashrc .profile; do
   fi
 done
 
+# The priming script ships in the image; link it into the (bind-mounted) home on every
+# start so it always points at the current image's version.
+ln -sfn /usr/local/bin/prime-box "$HOME/prime.sh"
+
 if command -v claude >/dev/null 2>&1; then
   # `claude rc` blocks on an interactive "Enable Remote Control? (y/n)" prompt unless this
   # flag is already set in the global config, which the empty bind mount does not carry.

@@ -41,46 +41,11 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         gh docker-ce-cli docker-buildx-plugin docker-compose-plugin nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://install.determinate.systems/nix | sh -s -- install linux \
-      --no-confirm \
-      --init none \
-      --extra-conf "experimental-features = nix-command flakes" \
-      --extra-conf "extra-substituters = https://cache.nix.logos.co/public" \
-      --extra-conf "extra-trusted-public-keys = public:l4HrXgL4nw246+LBh2SOJyhz64BoGegOYLheT/iIAPU= public:Z1wyVBEx8PHbXujYB52Mysv9Rd8rWIhyQ3bQyef9yy4=" \
-      --extra-conf "fallback = true" \
-      --extra-conf "max-jobs = auto" \
-      --extra-conf "sandbox = false"
-ENV PATH=/nix/var/nix/profiles/default/bin:$PATH
-
+# Nix, Rust, cargo tools and RISC0 are installed on demand by prime-box (see README), not at
+# build time. These locations are set up front so tools resolve as soon as it has run.
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-      | sh -s -- -y --no-modify-path --profile default --default-toolchain 1.97.1 \
-    && rustup toolchain install 1.94.0 --profile default \
-    && rustup toolchain install nightly --profile minimal --component rustfmt \
-    && rustup component add clippy rustfmt \
-    && rustup target add wasm32-unknown-unknown
-
-ENV RISC0_HOME=/usr/local/risc0 \
-    PATH=/usr/local/risc0/bin:$PATH
-RUN curl -L https://risczero.com/install | bash \
-    && mv /root/.risc0/bin/rzup /usr/local/bin/rzup \
-    && rm -rf /root/.risc0 \
-    && rzup install rust 1.94.1 \
-    && rzup install cpp 2024.1.5 \
-    && rzup install r0vm 3.0.5 \
-    && rzup install cargo-risczero 3.0.5
-
-RUN curl -L --proto '=https' --tlsv1.2 -sSf \
-      https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash \
-    && cargo binstall --no-confirm \
-        just@1.56.0 \
-        cargo-nextest@0.9.140 \
-        taplo-cli@0.10.0 \
-        cargo-machete@0.9.2 \
-        cargo-deny@0.20.2 \
-        cargo-leptos
+    RISC0_HOME=/usr/local/risc0
 
 RUN mkdir -p /claude-box
 
@@ -88,7 +53,7 @@ ENV HOME=/claude-box
 RUN sed -i 's|^root:x:0:0:root:/root:|root:x:0:0:root:/claude-box:|' /etc/passwd \
     && test "$(getent passwd root | cut -d: -f6)" = /claude-box
 
-ENV PATH="/claude-box/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+ENV PATH="/claude-box/.local/bin:/usr/local/bin:/usr/local/cargo/bin:/usr/local/risc0/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 RUN curl -fsSL https://claude.ai/install.sh | bash \
     && test -x /claude-box/.local/bin/claude \
@@ -117,7 +82,8 @@ RUN mkdir -p /etc/claude-code \
        > /etc/claude-code/managed-settings.json
 
 COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
-RUN chmod 0755 /usr/local/bin/box-entrypoint.sh
+COPY prime-box.sh /usr/local/bin/prime-box
+RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/prime-box
 ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
 
 WORKDIR /claude-box

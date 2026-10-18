@@ -45,6 +45,17 @@ daemon; until then its logs repeat the login command.
 Sessions run with approvals and Codex's sandbox disabled (`/etc/codex/managed_config.toml`)
 — the container is the sandbox.
 
+## Priming toolchains
+
+Neither image ships Nix (with the Logos cache), Rust, the cargo tools (just, nextest, taplo,
+machete, deny, leptos) or RISC0. They are installed on demand by `~/prime.sh`, which the
+agents are told to run before working on a project that needs them. To run it yourself:
+`docker compose exec claude ~/prime.sh` (or `codex`).
+
+It is idempotent, so re-running is cheap. Its installs live in the container, not in the
+bind-mounted home: they survive restarts but not a rebuild or `--force-recreate`. RISC0 is
+skipped on arm64, which rzup does not support.
+
 ## After pulling changes
 
 ```bash
