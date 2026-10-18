@@ -3,3 +3,5 @@ claude-box/*
 !claude-box/.gitkeep
 codex-box/*
 !codex-box/.gitkeep
+ai-box/*
+!ai-box/.gitkeep

@@ -64,3 +64,42 @@ services:
       - ./context/CLAUDE.md:/etc/claude-code/CLAUDE.md:ro
 
     stop_grace_period: 20s
+
+  # Claude and Codex together in one container. Opt-in: a plain `docker compose up` skips
+  # it; name it to start it (`docker compose up -d box`).
+  box:
+    profiles: [box]
+
+    build:
+      context: .
+      dockerfile: Dockerfile.box
+
+    container_name: ai-box
+    hostname: ai-box
+
+    restart: unless-stopped
+    init: true
+
+    stdin_open: true
+    tty: true
+
+    working_dir: /ai-box
+
+    # Optional host secrets/config (gitignored, so absent on a fresh clone).
+    # Values here are overridden by the `environment:` block below.
+    env_file:
+      - path: .env
+        required: false
+
+    environment:
+      HOME: /ai-box
+      CLAUDE_CONFIG_DIR: /ai-box/.claude
+      CODEX_HOME: /ai-box/.codex
+      TERM: xterm-256color
+
+    volumes:
+      - ./ai-box:/ai-box
+      - ./context/CLAUDE.md:/etc/claude-code/CLAUDE.md:ro
+      - ./context/AGENTS.md:/ai-box/.codex/AGENTS.md:ro
+
+    stop_grace_period: 20s
