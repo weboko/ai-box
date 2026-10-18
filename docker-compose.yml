@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.codex
 
     container_name: codex-box
-    hostname: codex-box
+    hostname: ${BOX_HOST:-local}-codex
 
     restart: unless-stopped
     init: true
@@ -38,7 +38,7 @@ services:
       dockerfile: Dockerfile.claude
 
     container_name: claude-box
-    hostname: claude-box
+    hostname: ${BOX_HOST:-local}-claude
 
     restart: unless-stopped
     init: true
@@ -75,7 +75,7 @@ services:
       dockerfile: Dockerfile.box
 
     container_name: ai-box
-    hostname: ai-box
+    hostname: ${BOX_HOST:-local}-box
 
     restart: unless-stopped
     init: true

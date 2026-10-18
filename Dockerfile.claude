@@ -83,9 +83,11 @@ RUN mkdir -p /etc/claude-code \
 
 COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
 COPY prime-box.sh /usr/local/bin/prime-box
-RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/prime-box
+COPY claude-daemon.sh /usr/local/bin/claude-daemon.sh
+RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/prime-box /usr/local/bin/claude-daemon.sh
 ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
 
 WORKDIR /claude-box
 
-CMD ["claude", "remote-control", "--name", "claude-box", "--permission-mode", "bypassPermissions"]
+# Waits for login, then runs remote control named after the container hostname.
+CMD ["claude-daemon.sh"]

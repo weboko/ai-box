@@ -2,22 +2,29 @@
 
 Containers that run coding agents: `claude`, `codex`, or `box` with both in one container.
 
+Drive them with `./box`, a thin wrapper around `docker compose` that takes the same
+arguments. It names each box after this machine — `<host>-claude`, `<host>-codex`,
+`<host>-box` — which is what the apps show, so boxes on different machines don't collide.
+The prefix is `hostname -s`; set `BOX_HOST` in `.env` to override it. Plain `docker compose`
+still works, but names the boxes `local-*`. Existing containers pick up a new name only when
+recreated (`./box up -d --force-recreate`).
+
 ## Claude
 
 | | |
 |---|---|
-| Build | `docker compose build claude` |
-| Log in (once per host) | `docker compose run --rm claude claude auth login` |
-| Run | `docker compose up -d claude` |
-| Logs | `docker compose logs -f claude` |
-| Restart | `docker compose restart claude` |
-| Rebuild + run | `docker compose up -d --build claude` |
-| Shell | `docker compose run --rm claude bash` |
+| Build | `./box build claude` |
+| Log in (once per host) | `./box run --rm claude claude auth login` |
+| Run | `./box up -d claude` |
+| Logs | `./box logs -f claude` |
+| Restart | `./box restart claude` |
+| Rebuild + run | `./box up -d --build claude` |
+| Shell | `./box run --rm claude bash` |
 
 The login is the only interactive step. Credentials persist in `./claude-box`, which is
 bind-mounted as `$HOME`, so they survive restarts and rebuilds.
 
-Once up, the session appears as `claude-box` in the Code tab at claude.ai/code and in the
+Once up, the session appears as `<host>-claude` in the Code tab at claude.ai/code and in the
 Claude mobile app.
 
 Sessions run with permissions fully bypassed and no prompts — the container is the sandbox.
@@ -26,14 +33,14 @@ Sessions run with permissions fully bypassed and no prompts — the container is
 
 | | |
 |---|---|
-| Build | `docker compose build codex` |
-| Log in (once per host) | `docker compose run --rm codex codex login --device-auth` |
-| Run | `docker compose up -d codex` |
-| Logs | `docker compose logs -f codex` |
-| Pairing code | `docker compose exec codex codex remote-control pair` |
-| Restart | `docker compose restart codex` |
-| Rebuild + run | `docker compose up -d --build codex` |
-| Shell | `docker compose run --rm codex bash` |
+| Build | `./box build codex` |
+| Log in (once per host) | `./box run --rm codex codex login --device-auth` |
+| Run | `./box up -d codex` |
+| Logs | `./box logs -f codex` |
+| Pairing code | `./box exec codex codex remote-control pair` |
+| Restart | `./box restart codex` |
+| Rebuild + run | `./box up -d --build codex` |
+| Shell | `./box run --rm codex bash` |
 
 The container runs Codex's remote-control app-server daemon and stays up for as long as
 the daemon does. Credentials persist in `./codex-box`, bind-mounted as `$HOME`.
@@ -49,20 +56,20 @@ Sessions run with approvals and Codex's sandbox disabled (`/etc/codex/managed_co
 
 | | |
 |---|---|
-| Build | `docker compose build box` |
-| Log in to Claude (once per host) | `docker compose run --rm box claude auth login` |
-| Log in to Codex (once per host) | `docker compose run --rm box codex login --device-auth` |
-| Run | `docker compose up -d box` |
-| Logs | `docker compose logs -f box` |
-| Restart | `docker compose restart box` |
-| Rebuild + run | `docker compose up -d --build box` |
-| Shell | `docker compose run --rm box bash` |
+| Build | `./box build box` |
+| Log in to Claude (once per host) | `./box run --rm box claude auth login` |
+| Log in to Codex (once per host) | `./box run --rm box codex login --device-auth` |
+| Run | `./box up -d box` |
+| Logs | `./box logs -f box` |
+| Restart | `./box restart box` |
+| Rebuild + run | `./box up -d --build box` |
+| Shell | `./box run --rm box bash` |
 
-`box` runs Claude's remote control and Codex's daemon side by side, both named `ai-box`. If
+`box` runs Claude's remote control and Codex's daemon side by side, both named `<host>-box`. If
 one exits, only that one is restarted; the other's sessions carry on. Each agent waits for
 its own login, so you can log in to either first; until then the logs repeat the command.
 
-It is opt-in: a plain `docker compose up -d` starts only `claude` and `codex`. Its home is
+It is opt-in: a plain `./box up -d` starts only `claude` and `codex`. Its home is
 `./ai-box`, separate from the other two, so it needs its own logins and can run alongside
 them. Settings (permission bypass, context files, `~/prime.sh`) match the separate boxes.
 
@@ -71,7 +78,7 @@ them. Settings (permission bypass, context files, `~/prime.sh`) match the separa
 None of the images ship Nix (with the Logos cache), Rust, the cargo tools (just, nextest, taplo,
 machete, deny, leptos) or RISC0. They are installed on demand by `~/prime.sh`, which the
 agents are told to run before working on a project that needs them. To run it yourself:
-`docker compose exec claude ~/prime.sh` (or `codex`, `box`).
+`./box exec claude ~/prime.sh` (or `codex`, `box`).
 
 It is idempotent, so re-running is cheap. Its installs live in the container, not in the
 bind-mounted home: they survive restarts but not a rebuild or `--force-recreate`. RISC0 is
@@ -81,8 +88,8 @@ skipped on arm64, which rzup does not support.
 
 ```bash
 git pull
-docker compose up -d --build --force-recreate claude
-docker compose logs -f claude
+./box up -d --build --force-recreate claude
+./box logs -f claude
 ```
 
 Use `--build` whenever `Dockerfile.claude` or `entrypoint.sh` changed; `--force-recreate`
@@ -92,8 +99,8 @@ applies to `codex` (`Dockerfile.codex`, `codex-daemon.sh`).
 Then check it took:
 
 ```bash
-docker compose ps claude    # Up, not Restarting
-docker compose exec claude env | grep -E 'CLAUDE_CODE_SANDBOXED|IS_SANDBOX'   # both 1
+./box ps claude    # Up, not Restarting
+./box exec claude env | grep -E 'CLAUDE_CODE_SANDBOXED|IS_SANDBOX'   # both 1
 ```
 
 Logs should show the remote-control banner, with no `Enable Remote Control? (y/n)` prompt
@@ -110,4 +117,4 @@ Do not put `ANTHROPIC_API_KEY` in it: Remote Control requires claude.ai subscrip
 and an API key overrides the stored login. Likewise leave out `OPENAI_API_KEY`: Codex
 remote control needs the ChatGPT login.
 
-Changes to `.env` need a recreate, not a restart: `docker compose up -d --force-recreate claude`.
+Changes to `.env` need a recreate, not a restart: `./box up -d --force-recreate claude`.

@@ -10,7 +10,7 @@ state="$CODEX_HOME/app-server-daemon"
 # Login is a separate one-off (see README). Idle until it lands on the shared bind mount
 # rather than crash-looping.
 until codex login status >/dev/null 2>&1; do
-  echo "$(hostname): codex not logged in; run: docker compose run --rm ${BOX_SERVICE:-codex} codex login --device-auth" >&2
+  echo "$(hostname): codex not logged in; run: ./box run --rm ${BOX_SERVICE:-codex} codex login --device-auth" >&2
   sleep 30
 done
 

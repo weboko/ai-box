@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# `docker compose`, with this machine's hostname passed in so each box is named
+# <host>-claude / <host>-codex / <host>-box. BOX_HOST in .env or the environment wins.
+cd "$(dirname "$0")"
+
+# Exporting it when .env sets it would shadow .env, which Compose ranks below the shell.
+if [ -z "${BOX_HOST:-}" ] && ! grep -qs '^BOX_HOST=' .env; then
+  # Hostnames allow only letters, digits and hyphens.
+  BOX_HOST="$(hostname -s | tr -c '[:alnum:]\n-' '-')"
+  export BOX_HOST
+fi
+
+exec docker compose "$@"
