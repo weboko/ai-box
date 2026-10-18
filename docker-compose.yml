@@ -28,7 +28,10 @@ services:
 
     volumes:
       - ./codex-box:/codex-box
-      - ./context/AGENTS.md:/codex-box/.codex/AGENTS.md:ro
+      # Shared instructions and skills, linked into place by entrypoint.sh. The whole
+      # directory, not single files: a file mount loses the file when an editor saves by
+      # replacing it.
+      - ./context:/opt/box-context:ro
 
     stop_grace_period: 20s
 
@@ -61,7 +64,7 @@ services:
 
     volumes:
       - ./claude-box:/claude-box
-      - ./context/CLAUDE.md:/etc/claude-code/CLAUDE.md:ro
+      - ./context:/opt/box-context:ro
 
     stop_grace_period: 20s
 
@@ -99,7 +102,6 @@ services:
 
     volumes:
       - ./ai-box:/ai-box
-      - ./context/CLAUDE.md:/etc/claude-code/CLAUDE.md:ro
-      - ./context/AGENTS.md:/ai-box/.codex/AGENTS.md:ro
+      - ./context:/opt/box-context:ro
 
     stop_grace_period: 20s

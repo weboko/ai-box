@@ -73,6 +73,25 @@ It is opt-in: a plain `./box up -d` starts only `claude` and `codex`. Its home i
 `./ai-box`, separate from the other two, so it needs its own logins and can run alongside
 them. Settings (permission bypass, context files, `~/prime.sh`) match the separate boxes.
 
+## Instructions and skills
+
+Everything in `context/` is mounted read-only into every box and wired up to both agents:
+
+- `context/AGENTS.md` — standing instructions. Claude reads it as its managed
+  `/etc/claude-code/CLAUDE.md`, Codex as `$CODEX_HOME/AGENTS.md`.
+- `context/skills/<name>/SKILL.md` — skills, linked into `$CLAUDE_CONFIG_DIR/skills` and
+  `$CODEX_HOME/skills`. Each `SKILL.md` starts with frontmatter:
+
+  ```markdown
+  ---
+  name: my-skill
+  description: What it does and when to use it.
+  ---
+  ```
+
+Edits apply to the next session without a rebuild. A newly added skill folder is linked on
+the next start: `./box restart <service>`. The agents cannot modify these files.
+
 ## Priming toolchains
 
 None of the images ship Nix (with the Logos cache), Rust, the cargo tools (just, nextest, taplo,

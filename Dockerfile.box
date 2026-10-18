@@ -89,6 +89,10 @@ RUN mkdir -p /etc/claude-code \
     && printf '%s\n' '{"permissions":{"defaultMode":"bypassPermissions"}}' \
        > /etc/claude-code/managed-settings.json
 
+# Managed memory, read by every session. Points into the context/ mount from compose, so it
+# dangles until runtime.
+RUN ln -sfn /opt/box-context/AGENTS.md /etc/claude-code/CLAUDE.md
+
 # Same for Codex: the managed layer outranks the user's config.toml, so every thread the
 # daemon spawns runs without approvals or Codex's own (bwrap) sandbox.
 RUN mkdir -p /etc/codex \
