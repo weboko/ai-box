@@ -5,3 +5,4 @@ codex-box/*
 !codex-box/.gitkeep
 ai-box/*
 !ai-box/.gitkeep
+.sessions
