@@ -15,3 +15,10 @@ working on a project that needs any of them — a `flake.nix`, `Cargo.toml`,
 It is idempotent: anything already installed is skipped, so re-running is cheap. Its
 installs do not survive a container rebuild, so run it again if the tools have gone missing.
 RISC0 is skipped on arm64 hosts, where rzup is unsupported.
+
+## Publishing
+
+Files in `~/www` are served by this box's web server and may be published on the internet
+through a Cloudflare tunnel. Put things there to share them (reports, previews, built
+sites) and never anything secret. A dev server on another port is not published unless
+the user adds a hostname for it in Cloudflare.

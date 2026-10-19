@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
     libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
     libdbus-1-3 fontconfig libfontconfig1 libfreetype6 libnss3 \
-    xvfb x11-utils mesa-utils \
+    xvfb x11-utils mesa-utils caddy \
     && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
     && rm -rf /var/lib/apt/lists/*
 
@@ -40,6 +40,13 @@ RUN install -m 0755 -d /etc/apt/keyrings \
     && apt-get install -y --no-install-recommends \
         gh docker-ce-cli docker-buildx-plugin docker-compose-plugin nodejs \
     && rm -rf /var/lib/apt/lists/*
+
+# Cloudflare tunnel client, for publishing the box's web server (see box-supervisor.sh).
+RUN curl -fsSL -o /tmp/cloudflared.deb \
+      "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$(dpkg --print-architecture).deb" \
+    && dpkg -i /tmp/cloudflared.deb \
+    && rm /tmp/cloudflared.deb \
+    && cloudflared --version
 
 # Nix, Rust, cargo tools and RISC0 are installed on demand by prime-box (see README), not at
 # build time. These locations are set up front so tools resolve as soon as it has run.
@@ -102,6 +109,9 @@ RUN mkdir -p /etc/codex \
 # The compose service name, used in the login hints the daemons print.
 ENV BOX_SERVICE=box
 
+# Agents box-supervisor.sh runs in this image.
+ENV BOX_AGENTS="claude codex"
+
 COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
 COPY prime-box.sh /usr/local/bin/prime-box
 COPY claude-daemon.sh codex-daemon.sh box-supervisor.sh /usr/local/bin/
@@ -111,5 +121,5 @@ ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
 
 WORKDIR /ai-box
 
-# Runs both agents and restarts whichever one exits.
+# Runs the agents, the web server and the tunnel; restarts whichever one exits.
 CMD ["box-supervisor.sh"]

@@ -6,8 +6,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Only what the Codex installer, codex-daemon.sh and basic repo work need.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl git jq ripgrep \
+    ca-certificates curl git jq ripgrep procps caddy \
     && rm -rf /var/lib/apt/lists/*
+
+# Cloudflare tunnel client, for publishing the box's web server (see box-supervisor.sh).
+RUN curl -fsSL -o /tmp/cloudflared.deb \
+      "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$(dpkg --print-architecture).deb" \
+    && dpkg -i /tmp/cloudflared.deb \
+    && rm /tmp/cloudflared.deb \
+    && cloudflared --version
 
 RUN mkdir -p /codex-box
 
@@ -38,12 +45,17 @@ RUN mkdir -p /etc/codex \
     && printf '%s\n' 'approval_policy = "never"' 'sandbox_mode = "danger-full-access"' \
        > /etc/codex/managed_config.toml
 
+# Agents box-supervisor.sh runs in this image.
+ENV BOX_AGENTS="codex"
+
 COPY entrypoint.sh /usr/local/bin/box-entrypoint.sh
-COPY codex-daemon.sh /usr/local/bin/codex-daemon.sh
 COPY prime-box.sh /usr/local/bin/prime-box
-RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/codex-daemon.sh /usr/local/bin/prime-box
+COPY codex-daemon.sh box-supervisor.sh /usr/local/bin/
+RUN chmod 0755 /usr/local/bin/box-entrypoint.sh /usr/local/bin/prime-box \
+      /usr/local/bin/codex-daemon.sh /usr/local/bin/box-supervisor.sh
 ENTRYPOINT ["/usr/local/bin/box-entrypoint.sh"]
 
 WORKDIR /codex-box
 
-CMD ["codex-daemon.sh"]
+# Runs the agents, the web server and the tunnel; restarts whichever one exits.
+CMD ["box-supervisor.sh"]

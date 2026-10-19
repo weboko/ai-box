@@ -60,7 +60,8 @@ Sessions run with approvals and Codex's sandbox disabled (`/etc/codex/managed_co
 | Log in to Claude (once per host) | `./box run --rm box claude auth login` |
 | Log in to Codex (once per host) | `./box run --rm box codex login --device-auth` |
 | Run | `./box up -d box` |
-| Logs | `./box logs -f box` |
+| Logs (Claude) | `./box logs -f box` |
+| Logs (Codex) | `./box exec box tail -f ~/logs/codex.log` |
 | Codex pairing code | `./box exec box codex remote-control pair` |
 | Restart | `./box restart box` |
 | Rebuild + run | `./box up -d --build box` |
@@ -73,6 +74,29 @@ its own login, so you can log in to either first; until then the logs repeat the
 It is opt-in: a plain `./box up -d` starts only `claude` and `codex`. Its home is
 `./ai-box`, separate from the other two, so it needs its own logins and can run alongside
 them. Settings (permission bypass, context files, `~/prime.sh`) match the separate boxes.
+
+## Web server and tunnel
+
+Every box serves `~/www` (inside the box) with Caddy on port 8080, with directory listings,
+for as long as it runs. Set `TUNNEL_TOKEN` in `.env` and the box also runs `cloudflared`,
+publishing it through a Cloudflare tunnel:
+
+1. In Cloudflare Zero Trust, create a tunnel (Networks → Tunnels) and copy its token.
+2. Add a public hostname to it with the service `http://localhost:8080`. To publish a dev
+   server an agent runs on another port, add another hostname pointing at that port.
+3. Put `TUNNEL_TOKEN=<token>` in `.env` and recreate the box:
+   `./box up -d --force-recreate <service>`.
+
+Everything in `~/www` is public unless you put Cloudflare Access in front of the hostname.
+One token is one tunnel, so run only one box with it: with several, Cloudflare spreads
+requests across them at random.
+
+Services other than Claude log to `~/logs/<name>.log` inside the box (`web`, `tunnel`,
+`codex`): `./box exec <service> tail -f ~/logs/tunnel.log`. In the codex box these are
+also in `./box logs`; where Claude runs, its screen owns `./box logs`.
+
+`.env` is not tracked by git. It used to be: on a clone made before that change, copy
+`.env` aside before `git pull` and put it back afterwards, since the pull removes it.
 
 ## Instructions and skills
 
