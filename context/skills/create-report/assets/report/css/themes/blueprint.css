@@ -1,0 +1,46 @@
+/* Blueprint: technical and architecture topics. Drafting-table blue, grid paper, mono accents. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap");
+
+:root {
+  color-scheme: dark;
+  --bg: #0b2f55;
+  --bg-2: #0f3a66;
+  --bg-3: #134577;
+  --ink: #eef5ff;
+  --ink-2: #b9cfe8;
+  --ink-3: #7f9dc0;
+  --line: rgba(200, 225, 255, 0.22);
+  --accent: #ffd166;
+  --accent-ink: #0b2f55;
+  --accent-2: #7fdbff;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --radius: 4px;
+  --shadow: none;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #008300;
+  --grid: rgba(200, 225, 255, 0.16);
+  --ev-fact: #b9cfe8;
+  --ev-estimate: #7fdbff;
+  --ev-assumption: #ffd166;
+  --ev-interp: #c4b5fd;
+}
+
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(200, 225, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 225, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(rgba(200, 225, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 225, 255, 0.04) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-attachment: fixed;
+}
+a { color: var(--accent-2); }
+h2 { text-transform: uppercase; letter-spacing: 0.04em; font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.6rem); }
+main > section > h2::before { content: attr(data-num); font-family: var(--font-mono); color: var(--accent); margin-right: 0.6em; }
+.hero h1 { font-weight: 700; }
+.hero::after { content: ""; display: block; margin-top: 1.6rem; height: 1px; background: repeating-linear-gradient(90deg, var(--ink-3) 0 8px, transparent 8px 14px); }
+.hero.has-image::after { display: none; }
+.tldr, .findings > li, .diagram, .chart, .layers, .steps, .explorer, details.more, .kpi, .recs > li, .risks > li, .next > li, .reconcile .claim, .table-wrap { box-shadow: none; border-style: solid; }
+.diagram, .layers, .explorer { border-style: dashed; }

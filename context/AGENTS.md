@@ -22,3 +22,6 @@ Files in `~/www` are served by this box's web server and may be published on the
 through a Cloudflare tunnel. Put things there to share them (reports, previews, built
 sites) and never anything secret. A dev server on another port is not published unless
 the user adds a hostname for it in Cloudflare.
+
+Research reports go through the `create-report` skill. It owns `~/www/index.html` (the list
+of reports) and rebuilds it on every publish, so don't edit that file by hand.

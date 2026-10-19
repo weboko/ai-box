@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="assets/css/report.css">
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <script defer src="assets/js/report.js"></script>
+  <script>/* Queues Report.explorer() calls made before report.js has loaded. */
+    window.Report = { q: [], explorer: function () { this.q.push(arguments); } };</script>
+</head>
+<body>
+  <header class="hero">
+    <p class="kicker">Investigation</p>
+    <h1>{{TITLE}}</h1>
+    <p class="dek">One sentence that frames the question and why it matters.</p>
+    <div class="byline">
+      <time data-meta="date" datetime="{{DATE}}">{{DATE}}</time>
+      <span data-meta="reading-time"></span>
+      <details class="report-meta"><summary>About this report</summary><div class="meta-panel"></div></details>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Contents"></nav>
+    <main>
+      <section id="tldr" class="tldr" data-toc="TL;DR">
+        <h2>TL;DR</h2>
+        <p class="answer">The answer, in one or two sentences.</p>
+        <ul>
+          <li>Supporting point.</li>
+        </ul>
+      </section>
+
+      <!-- Blocks from references/blocks.md go here, big picture first, then deeper. -->
+
+      <section id="sources">
+        <h2>Sources</h2>
+        <ol class="sources">
+          <li id="src-example"><a href="https://example.com">Title of the source</a>, Publisher, 2026.</li>
+        </ol>
+      </section>
+    </main>
+  </div>
+
+  <footer class="report-footer">
+    <span>{{TITLE}}</span>
+    <a href="../">All reports</a>
+  </footer>
+</body>
+</html>

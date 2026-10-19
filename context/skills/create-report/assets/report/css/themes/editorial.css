@@ -1,0 +1,36 @@
+/* Editorial: analysis, strategy, essays, people and ideas. Magazine serif, paper, generous whitespace. */
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  color-scheme: light;
+  --bg: #fffdf9;
+  --bg-2: #ffffff;
+  --bg-3: #f4efe6;
+  --ink: #1b1a17;
+  --ink-2: #57534b;
+  --ink-3: #8c877c;
+  --line: rgba(27, 26, 23, 0.12);
+  --accent: #b3261e;
+  --accent-ink: #ffffff;
+  --accent-2: #1f4e79;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-head: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --radius: 2px;
+  --shadow: none;
+  --measure: 42rem;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300;
+  --grid: #ece6da;
+}
+
+body { font-size: clamp(1.05rem, 1rem + 0.3vw, 1.18rem); line-height: 1.7; }
+.toc, .byline, .kpi-label, figcaption, table, .stack-bar, .explorer-inputs, .callout::before { font-family: "Inter", system-ui, sans-serif; }
+.hero { text-align: left; }
+.hero h1 { font-weight: 700; font-size: clamp(2.2rem, 1.5rem + 3.4vw, 3.9rem); letter-spacing: -0.02em; }
+.hero .dek { font-style: italic; }
+h2 { font-weight: 700; }
+main > section > h2 { border-top: 2px solid var(--ink); padding-top: 0.7rem; }
+.tldr { border: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); border-radius: 0; padding-left: 0; padding-right: 0; background: none; }
+.tldr .answer::first-letter { float: left; font-size: 3.4em; line-height: 0.85; padding: 0.06em 0.1em 0 0; color: var(--accent); font-weight: 700; }
+.findings > li, .recs > li, .risks > li, .next > li, details.more, .kpi { border-radius: 0; }
+blockquote { margin: 2rem 0; padding: 0 0 0 1.2rem; border-left: 3px solid var(--accent); font-size: 1.25em; font-style: italic; color: var(--ink); }
