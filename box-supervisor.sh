@@ -44,6 +44,12 @@ for agent in ${BOX_AGENTS:-}; do
   start "$agent" "$agent-daemon.sh"
 done
 
+# cron fires scheduled agent runs. Its crontab lives outside $HOME and is lost when the
+# container is recreated, so rebuild the agent-orchestrator block from the specs first.
+orchestrator=/opt/box-context/skills/agent-orchestrator/bin/schedule.sh
+[ -x "$orchestrator" ] && "$orchestrator" sync >>"$logs/cron.log" 2>&1
+start cron cron -f
+
 start web caddy file-server --browse --root "$HOME/www" --listen ":${WEB_PORT:-8080}"
 
 if [ -n "${TUNNEL_TOKEN:-}" ]; then

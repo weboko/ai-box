@@ -1,39 +1,34 @@
 #!/usr/bin/env bash
-# status.sh — read-only inspection + targeted kills.
+# status.sh — inspect runs, and kill one on request.
 #
 # Usage:
-#   status.sh --runs [--limit N]            # list recent runs
-#   status.sh --latest [--json]             # show the most recent run
-#   status.sh --run <run-id>                # show a specific run
-#   status.sh --logs <run-id> [--lines N]   # tail of a run's log
-#   status.sh --report <run-id|latest>      # print the report
-#   status.sh --cron                        # list managed cron blocks
-#   status.sh --next --slug <slug>          # next firing time
-#   status.sh --kill <run-id> [--force]     # kill the run's PID
-#   status.sh --validate                    # preflight checks
+#   status.sh --runs [--limit N]           # recent runs, newest first
+#   status.sh --run <run-id|latest> [--json]
+#   status.sh --latest [--json]            # same as --run latest
+#   status.sh --logs <run-id> [--lines N]  # tail of the agent log
+#   status.sh --report <run-id|latest>     # print the agent's report
+#   status.sh --kill <run-id> [--force]    # SIGTERM (or SIGKILL) the run's process group
+#   status.sh --validate                   # preflight checks
 #
-# Read-only by default. The only action it takes is --kill.
+# Scheduled tasks: schedule.sh list.
 
 . "$(dirname "$(readlink -f "$0")")/_lib.sh"
 
-MODE="" RUN_ID="" SLUG="" LIMIT=10 LINES=200 FORCE=0 JSON=0
+MODE="" RUN_ID="" LIMIT=10 LINES=200 FORCE=0 JSON=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
-       --runs)     MODE="runs"; shift ;;
-       --latest)   MODE="latest"; shift ;;
-       --run)      MODE="run"; RUN_ID="$2"; shift 2 ;;
-       --logs)     MODE="logs"; RUN_ID="$2"; shift 2 ;;
-       --report)   MODE="report"; RUN_ID="$2"; shift 2 ;;
-       --cron)     MODE="cron"; shift ;;
-       --next)     MODE="next"; shift ;;
-       --slug)     SLUG="$2"; shift 2 ;;
-       --kill)     MODE="kill"; RUN_ID="$2"; shift 2 ;;
+       --runs)     MODE=runs; shift ;;
+       --latest)   MODE=run; RUN_ID=latest; shift ;;
+       --run)      MODE=run; RUN_ID="$2"; shift 2 ;;
+       --logs)     MODE=logs; RUN_ID="$2"; shift 2 ;;
+       --report)   MODE=report; RUN_ID="$2"; shift 2 ;;
+       --kill)     MODE=kill; RUN_ID="$2"; shift 2 ;;
        --force)    FORCE=1; shift ;;
-       --validate) MODE="validate"; shift ;;
+       --validate) MODE=validate; shift ;;
        --limit)    LIMIT="$2"; shift 2 ;;
        --lines)    LINES="$2"; shift 2 ;;
        --json)     JSON=1; shift ;;
-    -h|--help)     sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)     sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown flag: $1" 2 ;;
   esac
 done
@@ -41,128 +36,81 @@ done
 ensureDirs
 need jq
 
-# Live-status decoration: "running" entries get checked against their PID.
-runs_with_live_status() {
-  jq -c '.[]' "$AO_INDEX" | while IFS= read -r row; do
-    pid="$(jq -r .pid <<<"$row")"
-    status="$(jq -r .status <<<"$row")"
-    if [[ "$status" == "running" && -n "$pid" && "$pid" != "null" ]]; then
-      if ! kill -0 "$pid" 2>/dev/null; then
-        row="$(jq -c '.status = "exited"' <<<"$row")"
-      fi
-    fi
-    printf '%s\n' "$row"
-  done
-}
+# Resolve "latest" and check the run exists.
+if [[ -n "$RUN_ID" ]]; then
+  [[ "$RUN_ID" == latest ]] && RUN_ID="$(latest_run_id)"
+  [[ -n "$RUN_ID" && -f "$AO_RUNS/$RUN_ID/run.json" ]] || die "no such run: ${RUN_ID:-<none yet>}"
+  RDIR="$AO_RUNS/$RUN_ID"
+fi
 
 case "$MODE" in
   runs)
-    runs_with_live_status \
-      | jq -s --argjson n "$LIMIT" '.[0:$n] | .[] |
-          [.run_id, .status, .agent, .repo, .task_slug, .branch, .log_file] | @tsv' -r \
-      | column -t -s $'\t' -N "RUN_ID,STATUS,AGENT,REPO,SLUG,BRANCH,LOG"
+    printf '%-16s %-8s %-7s %-28s %s\n' RUN_ID STATUS AGENT REPO BRANCH
+    run_ids | sed -n "1,${LIMIT}p" | while IFS= read -r rid; do
+      jq -r --arg s "$(run_status "$rid")" \
+        '[.run_id, $s, .agent, .repo, .branch] | @tsv' "$AO_RUNS/$rid/run.json" \
+        | while IFS=$'\t' read -r a b c d e; do printf '%-16s %-8s %-7s %-28s %s\n' "$a" "$b" "$c" "$d" "$e"; done
+    done
     ;;
 
-  latest)
-    entry="$(index_latest)"
+  run)
     if [[ "$JSON" -eq 1 ]]; then
-      echo "$entry" | jq .
+      jq --arg s "$(run_status "$RUN_ID")" --arg pid "$(run_pid "$RUN_ID")" \
+        '.status = $s | .pid = $pid' "$RDIR/run.json"
     else
-      echo "$entry" | jq -r '
+      jq -r --arg s "$(run_status "$RUN_ID")" --arg d "$RDIR" '
         "run_id   : \(.run_id)",
-        "status   : \(.status)",
+        "status   : \($s)\(if .exit_code then " (exit \(.exit_code))" else "" end)",
         "agent    : \(.agent)",
         "repo     : \(.repo)",
         "branch   : \(.branch)",
         "worktree : \(.worktree_path)",
-        "log      : \(.log_file)",
-        "report   : \(.run_dir)/report.md"' 2>/dev/null
+        "log      : \($d)/agent.log",
+        "report   : \($d)/report.md"' "$RDIR/run.json"
     fi
-    ;;
-
-  run)
-    [[ -n "$RUN_ID" ]] || die "--run requires <run-id>" 2
-    index_get "$RUN_ID" | jq .
     ;;
 
   logs)
-    [[ -n "$RUN_ID" ]] || die "--logs requires <run-id>" 2
-    log_file="$(index_get "$RUN_ID" | jq -r .log_file)"
-    [[ -f "$log_file" ]] || die "log not found: $log_file"
-    tail -n "$LINES" "$log_file"
+    tail -n "$LINES" "$RDIR/agent.log"
     ;;
 
   report)
-    if [[ "$RUN_ID" == "latest" || -z "$RUN_ID" ]]; then
-      RUN_ID="$(index_latest | jq -r .run_id)"
-    fi
-    rdir="$AO_RUNS/$RUN_ID"
-    if [[ -f "$rdir/report.md" ]]; then
-      cat "$rdir/report.md"
-    else
-      die "no report at $rdir/report.md"
-    fi
-    ;;
-
-  cron)
-    cron_dump | awk '/^# AGENT-ORCHESTRATOR TASK BEGIN/,/^# AGENT-ORCHESTRATOR TASK END/'
-    ;;
-
-  next)
-    [[ -n "$SLUG" ]] || die "--next requires --slug" 2
-    block="$(cron_dump | cron_find_block "slug=$SLUG")"
-    [[ -n "$block" ]] || die "no managed cron block for slug=$SLUG"
-    cron_line="$(printf '%s\n' "$block" | grep -v '^#' | head -1)"
-    cron_expr="$(printf '%s\n' "$cron_line" | awk '{print $1, $2, $3, $4, $5}')"
-    status="$(printf '%s\n' "$block" | head -1 | sed -E 's/.*status=([a-z]+).*/\1/')"
-    tz="$(cron_dump | awk -F= '/^CRON_TZ=/ {print $2; exit}')"
-    next=""
-    if command -v python3 >/dev/null 2>&1 && python3 -c 'import croniter' 2>/dev/null; then
-      next="$(python3 - "$cron_expr" <<'PY'
-import sys, datetime
-from croniter import croniter
-expr=sys.argv[1]
-print(croniter(expr, datetime.datetime.now()).get_next(datetime.datetime).isoformat())
-PY
-)"
-    fi
-    printf 'slug      : %s\n' "$SLUG"
-    printf 'cron      : %s\n' "$cron_expr"
-    printf 'timezone  : %s\n' "$tz"
-    printf 'status    : %s\n' "$status"
-    [[ -n "$next" ]] && printf 'next run  : %s\n' "$next"
+    [[ -f "$RDIR/report.md" ]] || die "no report yet at $RDIR/report.md"
+    cat "$RDIR/report.md"
     ;;
 
   kill)
-    [[ -n "$RUN_ID" ]] || die "--kill requires <run-id>" 2
-    entry="$(index_get "$RUN_ID")"
-    [[ "$entry" != "null" ]] || die "run not in index: $RUN_ID"
-    pid="$(jq -r .pid <<<"$entry")"
-    [[ -n "$pid" && "$pid" != "null" ]] || die "no PID recorded for $RUN_ID"
-    if ! kill -0 "$pid" 2>/dev/null; then
-      printf 'PID %s already exited\n' "$pid"; exit 0
+    pid="$(run_pid "$RUN_ID")"
+    if ! pid_alive "$pid"; then
+      printf 'Run %s is not running\n' "$RUN_ID"; exit 0
     fi
-    if [[ "$FORCE" -eq 1 ]]; then
-      kill -9 "$pid"; printf 'Force-killed %s (run %s)\n' "$pid" "$RUN_ID"
-    else
-      kill "$pid";    printf 'Sent SIGTERM to %s (run %s)\n' "$pid" "$RUN_ID"
-    fi
+    sig=TERM; [[ "$FORCE" -eq 1 ]] && sig=KILL
+    # agent.pid is the process group leader when setsid was available.
+    kill -s "$sig" -- "-$pid" 2>/dev/null || kill -s "$sig" "$pid"
+    run_json_set "$RUN_ID" '.status = "killed" | .finalized_at = $t' --arg t "$(isoNow)"
+    printf 'Sent SIG%s to run %s (PID %s)\n' "$sig" "$RUN_ID" "$pid"
     ;;
 
   validate)
     rc=0
-    check() { printf '%-40s' "$1"; if eval "$2" >/dev/null 2>&1; then echo "ok"; else echo "FAIL"; rc=1; fi; }
-    check "run-agent.sh executable"        "[[ -x '$AO_RUN_AGENT' ]]"
-    check "config.json exists"             "[[ -f '$AO_CONFIG' ]]"
-    check "claude binary"                  "command -v claude"
-    check "codex binary"                   "command -v codex"
-    check "gh authenticated"               "gh auth status"
-    check "git available"                  "command -v git"
-    check "jq available"                   "command -v jq"
-    check "flock available"                "command -v flock"
-    check "runs dir writable"              "[[ -w '$AO_RUNS' ]]"
-    check "repos dir writable"             "[[ -w '$AO_REPOS' ]]"
-    check "backlog dir writable"           "[[ -w '$AO_BACKLOG' ]]"
+    # check LABEL COMMAND [optional]
+    check() {
+      printf '%-28s' "$1"
+      if eval "$2" >/dev/null 2>&1; then echo ok
+      elif [[ "${3:-}" == optional ]]; then echo "missing (optional)"
+      else echo FAIL; rc=1
+      fi
+    }
+    check "git"                  "command -v git"
+    check "jq"                   "command -v jq"
+    check "gh authenticated"     "gh auth status"
+    check "claude or codex"      "command -v claude || command -v codex"
+    check "claude"               "command -v claude" optional
+    check "codex"                "command -v codex" optional
+    check "crontab (scheduling)" "command -v crontab" optional
+    check "cron daemon running"  "cron_daemon_running" optional
+    check "config.json"          "[[ -f '$AO_CONFIG' ]]" optional
+    check "state dir writable"   "[[ -w '$AO_HOME' ]]"
     exit "$rc"
     ;;
 

@@ -1,26 +1,20 @@
 #!/usr/bin/env bash
-# _lib.sh — shared helpers for agent-orchestrator wrappers. Source, don't execute.
+# _lib.sh — shared helpers for agent-orchestrator scripts. Source, don't execute.
 #
-#   . "$(dirname "$0")/_lib.sh"
+#   . "$(dirname "$(readlink -f "$0")")/_lib.sh"
 
 set -Eeuo pipefail
 
-# Cron starts with a minimal PATH, which can hide user-installed tools such as
-# jq, gh, claude, codex, npm/node, and Homebrew binaries. Keep the wrappers
-# self-contained so recurring tasks behave like interactive runs.
-export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.cargo/bin:$HOME/.nix-profile/bin:$HOME/bin:/usr/local/bin:/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:${PATH:-/usr/bin:/bin}"
-
-# All runtime state lives under one root; each piece can be overridden.
+# All runtime state lives under one root.
 AO_HOME="${AO_HOME:-$HOME/.agent-orchestrator}"
-AO_BACKLOG="${AO_BACKLOG:-$AO_HOME/backlog}"
-AO_REPORTS="${AO_REPORTS:-$AO_HOME/reports}"
-AO_REPOS="${AO_REPOS:-$AO_HOME/repos}"
-AO_RUNS="${AO_RUNS:-$AO_HOME/runs}"
-AO_LOCKS="$AO_RUNS/locks"
-AO_CONFIG="${AO_CONFIG:-$AO_HOME/config.json}"
-AO_INDEX="$AO_RUNS/index.json"
-AO_SKILL_DIR="${AO_SKILL_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-AO_RUN_AGENT="${AO_RUN_AGENT:-$AO_SKILL_DIR/bin/run-agent.sh}"
+AO_BACKLOG="$AO_HOME/backlog"
+AO_SCHEDULED="$AO_HOME/scheduled"
+AO_REPORTS="$AO_HOME/reports"
+AO_REPOS="$AO_HOME/repos"
+AO_RUNS="$AO_HOME/runs"
+AO_CONFIG="$AO_HOME/config.json"
+AO_SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+AO_BIN="$AO_SKILL_DIR/bin"
 AO_TEMPLATES="$AO_SKILL_DIR/templates"
 
 log()    { printf '%s [%s] %s\n' "$(date -Is)" "${0##*/}" "$*" >&2; }
@@ -40,51 +34,58 @@ cfg() {
 }
 
 ensureDirs() {
-  mkdir -p \
-    "$AO_RUNS" "$AO_LOCKS" \
-    "$AO_REPOS" \
-    "$AO_BACKLOG" \
-    "$AO_BACKLOG/done" \
-    "$AO_BACKLOG/recurring" \
-    "$AO_BACKLOG/recurring/stopped" \
-    "$AO_REPORTS"
-  [[ -f "$AO_INDEX" ]] || echo '[]' > "$AO_INDEX"
+  mkdir -p "$AO_BACKLOG/done" "$AO_SCHEDULED" "$AO_REPORTS" "$AO_REPOS" "$AO_RUNS"
 }
 
-# ---- frontmatter helpers ----------------------------------------------------
-# Extract a YAML scalar from a Markdown file's frontmatter. Crude but works
-# for the simple key: value lines we generate.
+# ---- agents -------------------------------------------------------------------
+agent_install_hint() {
+  case "$1" in
+    claude) echo "npm install -g @anthropic-ai/claude-code" ;;
+    codex)  echo "npm install -g @openai/codex" ;;
+  esac
+}
+
+need_agent() {
+  case "$1" in claude|codex) ;; *) die "invalid agent: $1 (expected claude or codex)" 2 ;; esac
+  command -v "$1" >/dev/null 2>&1 \
+    || die "agent binary not found: $1. Install hint: $(agent_install_hint "$1"). No run was started."
+}
+
+# ---- frontmatter --------------------------------------------------------------
+# Simple `key: value` lines between the leading `---` markers; quotes are stripped.
 fm_get() {
   local key="$1" file="$2"
   awk -v k="$key" '
-    BEGIN { in_fm=0 }
+    /^---[[:space:]]*$/ { if (++n == 2) exit; next }
+    n == 1 && $0 ~ "^"k"[[:space:]]*:" {
+      sub("^"k"[[:space:]]*:[[:space:]]*", ""); gsub(/^"|"$/, ""); print; exit
+    }
+  ' "$file"
+}
+
+# Set (or add) a frontmatter key in place.
+fm_set() {
+  local key="$1" val="$2" file="$3" tmp
+  tmp="$(mktemp)"
+  awk -v k="$key" -v v="$val" '
     /^---[[:space:]]*$/ {
-      in_fm = !in_fm; if (!in_fm) exit; next
+      if (++n == 2 && !done) { print k ": \"" v "\""; done = 1 }
+      print; next
     }
-    in_fm && $0 ~ "^[[:space:]]*"k"[[:space:]]*:" {
-      sub("^[[:space:]]*"k"[[:space:]]*:[[:space:]]*","")
-      gsub(/^"|"$/,"")
-      print; exit
-    }
-  ' "$file"
+    n == 1 && $0 ~ "^"k"[[:space:]]*:" { if (!done) print k ": \"" v "\""; done = 1; next }
+    { print }
+  ' "$file" > "$tmp" && cat "$tmp" > "$file" && rm -f "$tmp"
 }
 
-# Extract first list item under `target_repositories:` (the canonical repo).
-fm_first_repo() {
-  local file="$1"
-  awk '
-    /^---[[:space:]]*$/ { fm = !fm; if (!fm) exit; next }
-    fm && /^target_repositories:/ { in_list=1; next }
-    in_list && /^[^[:space:]-]/   { in_list=0 }
-    in_list && /^[[:space:]]*-/ {
-      sub(/^[[:space:]]*-[[:space:]]*/,"")
-      gsub(/^"|"$/,"")
-      print; exit
-    }
-  ' "$file"
+spec_slug() {
+  local slug
+  slug="$(fm_get slug "$1")"
+  [[ -n "$slug" ]] || slug="$(slugify "$(fm_get title "$1")")"
+  [[ -n "$slug" ]] || die "spec has neither slug nor title: $1"
+  printf '%s\n' "$slug"
 }
 
-# ---- slugs and repos --------------------------------------------------------
+# ---- slugs and repos ----------------------------------------------------------
 slugify() {
   # slugify "Some Title!" → "some-title"
   printf '%s' "$1" \
@@ -140,20 +141,18 @@ default_branch() {
     || echo main
 }
 
-# Add a worktree at TARGET on a fresh branch. Echoes "branch\nworktree".
+# Add a worktree at TARGET on a fresh branch. Echoes the branch name.
 create_worktree() {
   local base="$1" agent="$2" slug="$3" run_id="$4" target="$5"
-  local prefix
-  prefix="$(cfg branch_prefix agent)"
-  local branch="${prefix}/${agent}/${slug}-${run_id}"
-  local default
+  local branch default
+  branch="$(cfg branch_prefix agent)/${agent}/${slug}-${run_id}"
   default="$(default_branch "$base")"
   log "creating worktree $target on branch $branch from origin/$default"
   git -C "$base" worktree add -b "$branch" "$target" "origin/$default" >&2
-  printf '%s\n%s\n' "$branch" "$target"
+  printf '%s\n' "$branch"
 }
 
-# ---- agent-task.md assembly -------------------------------------------------
+# ---- agent-task.md assembly ---------------------------------------------------
 build_agent_task() {
   # build_agent_task SPEC OUT RUN_ID AGENT SLUG REPO BRANCH RUN_DIR WORKTREE
   local spec="$1" out="$2" run_id="$3" agent="$4" slug="$5" repo="$6" branch="$7"
@@ -176,70 +175,51 @@ build_agent_task() {
   } > "$out"
 }
 
-# ---- index.json -------------------------------------------------------------
-index_upsert() {
-  # index_upsert RUN_JSON
-  local entry="$1"
-  local tmp; tmp="$(mktemp)"
-  jq --argjson e "$entry" '
-    map(select(.run_id != $e.run_id)) + [$e] | sort_by(.run_id) | reverse
-  ' "$AO_INDEX" > "$tmp" && mv "$tmp" "$AO_INDEX"
+# ---- runs ---------------------------------------------------------------------
+# Each run is a folder runs/<run-id>/ with run.json; there is no separate index.
+
+# Run ids, newest first.
+run_ids() {
+  local f
+  for f in "$AO_RUNS"/*/run.json; do
+    if [[ -f "$f" ]]; then basename "$(dirname "$f")"; fi
+  done | sort -r
 }
 
-index_get() {
-  # index_get RUN_ID
-  jq --arg id "$1" 'map(select(.run_id == $id))[0]' "$AO_INDEX"
+latest_run_id() { run_ids | sed -n 1p; }
+
+pid_alive() { [[ -n "${1:-}" ]] && kill -0 "$1" 2>/dev/null; }
+
+run_pid() { cat "$AO_RUNS/$1/agent.pid" 2>/dev/null || true; }
+
+# running | done | failed | killed | exited (process gone, never finalized)
+run_status() {
+  local rid="$1" status
+  status="$(jq -r .status "$AO_RUNS/$rid/run.json")"
+  if [[ "$status" == running ]] && ! pid_alive "$(run_pid "$rid")"; then
+    status=exited
+  fi
+  printf '%s\n' "$status"
 }
 
-index_latest() {
-  jq '.[0]' "$AO_INDEX"
+run_json_set() {
+  # run_json_set RUN_ID JQ_FILTER [jq args…]
+  local rj="$AO_RUNS/$1/run.json" filter="$2" tmp
+  shift 2
+  tmp="$(mktemp)"
+  jq "$@" "$filter" "$rj" > "$tmp" && mv "$tmp" "$rj"
 }
 
-# ---- cron management --------------------------------------------------------
-# Block markers used in the user crontab.
-cron_begin() { printf '# AGENT-ORCHESTRATOR TASK BEGIN id=%s slug=%s status=%s\n' "$1" "$2" "${3:-active}"; }
-cron_end()   { printf '# AGENT-ORCHESTRATOR TASK END id=%s\n' "$1"; }
+# ---- crontab ------------------------------------------------------------------
+# One managed block, regenerated wholesale by `schedule.sh sync`.
+CRON_BEGIN="# BEGIN agent-orchestrator (generated by schedule.sh sync; edit the specs, not this block)"
+CRON_END="# END agent-orchestrator"
 
-# Read current crontab to stdout (empty if none).
 cron_dump() { crontab -l 2>/dev/null || true; }
-
-# Load a new crontab from stdin.
 cron_load() { crontab -; }
 
-# Remove a managed block by id. Echoes the new crontab.
-cron_strip_block() {
-  local id="$1"
-  awk -v id="$id" '
-    BEGIN { skip=0 }
-    $0 ~ ("# AGENT-ORCHESTRATOR TASK BEGIN id="id) { skip=1; next }
-    skip && $0 ~ ("# AGENT-ORCHESTRATOR TASK END id="id) { skip=0; next }
-    !skip { print }
-  '
+cron_without_block() {
+  cron_dump | awk '/^# BEGIN agent-orchestrator/ { s = 1 } !s { print } /^# END agent-orchestrator/ { s = 0 }'
 }
 
-# Find a managed block by id or slug. Prints the block (begin..end inclusive).
-cron_find_block() {
-  local key="$1"  # id=… or slug=…
-  awk -v k="$key" '
-    BEGIN { in_block=0 }
-    /^# AGENT-ORCHESTRATOR TASK BEGIN/ {
-      in_block = (index($0, k) > 0); buf = $0 ORS; next
-    }
-    in_block { buf = buf $0 ORS }
-    /^# AGENT-ORCHESTRATOR TASK END/ && in_block { printf "%s", buf; in_block=0 }
-  '
-}
-
-# Ensure CRON_TZ line is present at the top of the crontab.
-ensure_cron_tz() {
-  local tz="$1"
-  local existing
-  existing="$(cron_dump)"
-  if [[ "$existing" == *"CRON_TZ=$tz"* ]]; then
-    return 0
-  fi
-  {
-    printf 'CRON_TZ=%s\n' "$tz"
-    printf '%s\n' "$existing"
-  } | cron_load
-}
+cron_daemon_running() { pgrep -x cron >/dev/null 2>&1 || pgrep -x crond >/dev/null 2>&1; }

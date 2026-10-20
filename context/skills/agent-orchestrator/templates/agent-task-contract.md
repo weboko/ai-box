@@ -42,7 +42,7 @@ Repository:
 ## GitHub Behavior
 Use the available `gh` CLI authentication.
 
-You must:
+Unless the task above says otherwise (for example "analysis only, no PR"), you must:
 1. inspect the repository state;
 2. implement the requested change;
 3. run relevant tests/checks where practical;
