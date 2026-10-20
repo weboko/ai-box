@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Only what the Codex installer, codex-daemon.sh and basic repo work need.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl git jq ripgrep procps caddy \
+    ca-certificates curl git openssh-client jq ripgrep procps caddy \
     && rm -rf /var/lib/apt/lists/*
 
 # Cloudflare tunnel client, for publishing the box's web server (see box-supervisor.sh).

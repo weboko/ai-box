@@ -104,6 +104,29 @@ also in `./box logs`; where Claude runs, its screen owns `./box logs`.
 `.env` is not tracked by git. It used to be: on a clone made before that change, copy
 `.env` aside before `git pull` and put it back afterwards, since the pull removes it.
 
+## Signed commits
+
+Boxes can sign the commits and tags they make, so GitHub shows them as **Verified**. Each
+box signs with an SSH key of its own, not yours: the agents run with every permission
+bypassed, and a forwarded host key would let them log in wherever that key does. A key
+added to GitHub as a *Signing Key* can sign commits but not authenticate.
+
+1. In `.env`, set `GIT_SIGNING=1` and the git identity (`GIT_AUTHOR_NAME`,
+   `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL`). The committer email
+   must be a verified address on your GitHub account, or GitHub won't verify the commits.
+2. Recreate the box: `./box up -d --force-recreate <service>` (add `--build` for `codex`
+   the first time; its image gained `ssh-keygen`). On first start it creates
+   `~/.ssh/git-signing` in its home and prints the public key to `./box logs <service>`.
+3. Add that key at https://github.com/settings/ssh/new with the key type **Signing Key**.
+   It is also on the host in `./<home>/.ssh/git-signing.pub` (`claude-box`, `codex-box`,
+   `ai-box`), or use `gh ssh-key add <file> --type signing` (needs the
+   `admin:ssh_signing_key` scope: `gh auth refresh -s admin:ssh_signing_key`).
+
+Each home has its own key, so register one per box you run. Until a key is registered,
+GitHub shows that box's commits as **Unverified**. To revoke a key, delete it on GitHub and
+remove `./<home>/.ssh/git-signing*`; the box makes a new one on its next start. Unset
+`GIT_SIGNING` and recreate the box to stop signing.
+
 ## Instructions and skills
 
 Everything in `context/` is mounted read-only into every box and wired up to both agents:

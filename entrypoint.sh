@@ -49,6 +49,34 @@ if [ -d "$ctx" ]; then
   fi
 fi
 
+# Commit signing, opt-in with GIT_SIGNING=1. The box signs with a key of its own, kept in
+# the (bind-mounted) home so it survives rebuilds, never with the host's keys. The config
+# goes to system scope: it leaves ~/.gitconfig alone and reaches `docker exec` shells too.
+# Changing GIT_SIGNING means recreating the container, which starts from the image's
+# /etc/gitconfig, so turning it off needs no cleanup here.
+if [ "${GIT_SIGNING:-}" = 1 ]; then
+  key="$HOME/.ssh/git-signing"
+  if [ ! -f "$key" ]; then
+    mkdir -p -m 700 "$HOME/.ssh"
+    ssh-keygen -q -t ed25519 -N '' -C "$(hostname) git signing" -f "$key"
+  fi
+  git config --system gpg.format ssh
+  git config --system user.signingkey "$key.pub"
+  git config --system commit.gpgsign true
+  git config --system tag.gpgsign true
+
+  # Lets `git log --show-signature` verify the box's own commits.
+  email="${GIT_COMMITTER_EMAIL:-${GIT_AUTHOR_EMAIL:-}}"
+  if [ -n "$email" ]; then
+    printf '%s %s\n' "$email" "$(cat "$key.pub")" > "$HOME/.ssh/allowed_signers"
+    git config --system gpg.ssh.allowedSignersFile "$HOME/.ssh/allowed_signers"
+  fi
+
+  echo "entrypoint: signing commits with $key.pub; for GitHub to show them as Verified," \
+    "add it as a Signing Key at https://github.com/settings/ssh/new:" >&2
+  cat "$key.pub" >&2
+fi
+
 if command -v claude >/dev/null 2>&1; then
   # `claude rc` blocks on an interactive "Enable Remote Control? (y/n)" prompt unless this
   # flag is already set in the global config, which the empty bind mount does not carry.

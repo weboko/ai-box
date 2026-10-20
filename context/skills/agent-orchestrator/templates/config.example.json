@@ -1,0 +1,7 @@
+{
+  "github_user": "your-github-username",
+  "default_org": "",
+  "timezone": "",
+  "default_agent": "claude",
+  "branch_prefix": "agent"
+}

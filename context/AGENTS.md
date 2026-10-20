@@ -16,6 +16,11 @@ It is idempotent: anything already installed is skipped, so re-running is cheap.
 installs do not survive a container rebuild, so run it again if the tools have gone missing.
 RISC0 is skipped on arm64 hosts, where rzup is unsupported.
 
+## Git
+
+Commits and tags may be signed automatically with this box's key. Don't pass
+`--no-gpg-sign` or change git's signing config; if signing fails, report it.
+
 ## Publishing
 
 Files in `~/www` are served by this box's web server and may be published on the internet
