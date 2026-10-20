@@ -1,56 +1,87 @@
 #!/usr/bin/env bash
 # Scaffold a report workspace: $REPORTS_HOME/<date>-<slug>/ with a private prompt.md and
-# the publishable site/ (template, chosen theme, Mermaid and Chart.js).
+# brief.md, and the publishable site/ (core + the chosen template).
 #
-#   new-report.sh "<title>" <blueprint|editorial|explorer|dashboard> [short-name]
-#   new-report.sh --vendor <slug>     re-fetch the JS libraries into an existing report
+#   new-report.sh "<title>" <template> [short-name]
+#   new-report.sh --switch <slug> <template>   re-scaffold an existing report in another
+#                                     template (same slug, brief, model and images; the old
+#                                     page is kept outside site/ for reference)
+#   new-report.sh --vendor <slug>     fetch Mermaid into an existing report (diagrams)
+#   new-report.sh --templates         list the templates
 set -euo pipefail
 
 skill_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 reports="${REPORTS_HOME:-$HOME/reports}"
 www="${WWW_ROOT:-$HOME/www}"
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/create-report"
+templates="$skill_dir/assets/templates"
 
 MERMAID_VERSION=11.17.2
-CHARTJS_VERSION=4.5.1
 
 die() { echo "new-report: $*" >&2; exit 1; }
+names() { for d in "$templates"/*/; do [ -f "$d/template.json" ] && basename "$d"; done | paste -sd'|' -; }
 
-# Downloads each library once into the cache, then copies it into the report. A failed
-# download warns instead of failing: the report still works, minus diagrams or charts.
-fetch_vendor() {
-  local dest=$1/assets/vendor name version url file
+# Mermaid is optional (core charts and box diagrams need no library). Downloaded once into
+# the cache, then copied into the report; publish.sh drops it when the page doesn't use it.
+fetch_mermaid() {
+  local dest=$1/assets/vendor file="$cache/$MERMAID_VERSION-mermaid.min.js"
   mkdir -p "$dest" "$cache"
-  while read -r name version url; do
-    file="$cache/$version-$name"
-    if [ ! -s "$file" ]; then
-      if ! curl -fsSL --retry 2 -o "$file.part" "$url"; then
-        rm -f "$file.part"
-        echo "new-report: warning: could not download $url; $name will not render" >&2
-        continue
-      fi
-      mv "$file.part" "$file"
-    fi
-    cp "$file" "$dest/$name"
-  done <<EOF
-mermaid.min.js $MERMAID_VERSION https://cdn.jsdelivr.net/npm/mermaid@$MERMAID_VERSION/dist/mermaid.min.js
-chart.umd.min.js $CHARTJS_VERSION https://cdn.jsdelivr.net/npm/chart.js@$CHARTJS_VERSION/dist/chart.umd.min.js
-EOF
+  if [ ! -s "$file" ]; then
+    curl -fsSL --retry 2 -o "$file.part" "https://cdn.jsdelivr.net/npm/mermaid@$MERMAID_VERSION/dist/mermaid.min.js" \
+      || { rm -f "$file.part"; die "could not download Mermaid"; }
+    mv "$file.part" "$file"
+  fi
+  cp "$file" "$dest/mermaid.min.js"
 }
 
-if [ "${1:-}" = "--vendor" ]; then
-  [ -n "${2:-}" ] && [ -d "$reports/$2/site" ] || die "no report workspace $reports/${2:-<slug>}"
-  fetch_vendor "$reports/$2/site"
-  echo "vendor libraries refreshed in $reports/$2/site/assets/vendor"
-  exit 0
-fi
+case "${1:-}" in
+  --vendor)
+    [ -n "${2:-}" ] && [ -d "$reports/$2/site" ] || die "no report workspace $reports/${2:-<slug>}"
+    fetch_mermaid "$reports/$2/site"
+    echo "mermaid: $reports/$2/site/assets/vendor/mermaid.min.js"
+    echo 'core.js loads it automatically on pages that have a .mermaid element'
+    exit 0
+    ;;
+  --templates)
+    exec bash "$skill_dir/scripts/formats.sh" --list
+    ;;
+  --switch)
+    slug=${2:-}; template=${3:-}
+    site="$reports/$slug/site"
+    [ -n "$slug" ] && [ -d "$site" ] || die "no report workspace $reports/${slug:-<slug>}"
+    tpl="$templates/$template"
+    [ -n "$template" ] && [ -f "$tpl/template.json" ] || die "unknown template '$template' ($(names | tr '|' ' '))"
+    command -v jq >/dev/null || die "jq is required"
+    old=$(jq -r '.template // .theme // "old"' "$site/report.json")
+    keep="$reports/$slug/index.$old.$(date +%H%M%S).html"
+    [ -f "$site/index.html" ] && mv "$site/index.html" "$keep"
+    rm -rf "$site/assets/template" "$site/assets/core" "$site/assets/css" "$site/assets/js"
+    mkdir -p "$site/assets/template"
+    cp -R "$skill_dir/assets/core" "$site/assets/core"
+    (cd "$tpl" && find . -type f ! -name index.html ! -name template.json -print0 | while IFS= read -r -d '' f; do
+      mkdir -p "$site/assets/template/$(dirname "$f")"
+      cp "$f" "$site/assets/template/$f"
+    done)
+    chmod -R u+w "$site"
+    title=$(jq -r '.title' "$site/report.json")
+    jq -Rrs --arg t "$(jq -rn --arg t "$title" '$t | @html')" --arg d "$(jq -r '.date' "$site/report.json")" \
+      'gsub("\\{\\{TITLE\\}\\}"; $t) | gsub("\\{\\{DATE\\}\\}"; $d)' "$tpl/index.html" >"$site/index.html"
+    tmp="$site/report.json.tmp"
+    jq --arg t "$template" '.template = $t | del(.theme)' "$site/report.json" >"$tmp" && mv "$tmp" "$site/report.json"
+    sed -i.bak -E "s/^- Template: .*/- Template: $template/" "$reports/$slug/prompt.md" && rm -f "$reports/$slug/prompt.md.bak"
+    echo "switched:  $slug → $template   (guide: $skill_dir/references/templates/$template.md)"
+    echo "old page:  $keep   (reference only; not published)"
+    echo "next:      render site/index.html from brief.md, check, publish.sh $slug"
+    exit 0
+    ;;
+esac
 
 title=${1:-}
-theme=${2:-}
+template=${2:-}
 short=${3:-}
-[ -n "$title" ] && [ -n "$theme" ] || die 'usage: new-report.sh "<title>" <blueprint|editorial|explorer|dashboard> [short-name]'
-theme_css="$skill_dir/assets/report/css/themes/$theme.css"
-[ -f "$theme_css" ] || die "unknown theme '$theme' (blueprint, editorial, explorer, dashboard)"
+[ -n "$title" ] && [ -n "$template" ] || die "usage: new-report.sh \"<title>\" <$(names)> [short-name]"
+tpl="$templates/$template"
+[ -f "$tpl/template.json" ] && [ -f "$tpl/index.html" ] || die "unknown template '$template' ($(names | tr '|' ' '))"
 command -v jq >/dev/null || die "jq is required"
 
 date=$(date +%F)
@@ -69,13 +100,14 @@ done
 
 ws="$reports/$slug"
 site="$ws/site"
-tpl="$skill_dir/assets/report"
-mkdir -p "$site/assets/css" "$site/assets/js" "$site/images"
+mkdir -p "$site/assets/template" "$site/images"
 
 # Copies, not links: the skill directory is read-only and reports must stand alone.
-cp "$tpl/css/report.css" "$site/assets/css/report.css"
-cp "$theme_css" "$site/assets/css/theme.css"
-cp "$tpl/js/report.js" "$site/assets/js/report.js"
+cp -R "$skill_dir/assets/core" "$site/assets/core"
+(cd "$tpl" && find . -type f ! -name index.html ! -name template.json -print0 | while IFS= read -r -d '' f; do
+  mkdir -p "$site/assets/template/$(dirname "$f")"
+  cp "$f" "$site/assets/template/$f"
+done)
 chmod -R u+w "$site"
 
 title_html=$(jq -rn --arg t "$title" '$t | @html')
@@ -85,10 +117,10 @@ jq -Rrs --arg t "$title_html" --arg d "$date" 'gsub("\\{\\{TITLE\\}\\}"; $t) | g
 # Claude Code marks its subprocesses; any other agent fills this in itself.
 agent=""
 [ -n "${CLAUDECODE:-}" ] && agent="Claude Code"
-jq --arg title "$title" --arg slug "$slug" --arg date "$date" --arg theme "$theme" --arg agent "$agent" \
+jq -n --arg title "$title" --arg slug "$slug" --arg date "$date" --arg template "$template" --arg agent "$agent" \
   --arg created "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  '.title = $title | .slug = $slug | .date = $date | .created = $created | .theme = $theme | .agent = $agent' \
-  "$tpl/report.json" >"$site/report.json"
+  '{title: $title, slug: $slug, date: $date, created: $created, updated: "", tldr: "", tags: [], model: "", agent: $agent, template: $template, notes: ""}' \
+  >"$site/report.json"
 
 cat >"$ws/prompt.md" <<EOF
 # $title
@@ -96,18 +128,30 @@ cat >"$ws/prompt.md" <<EOF
 - Date: $date
 - Model:
 - Report: $slug
+- Template: $template
 
 ## Request
 
 <!-- create-report: replace this line with the user's request, verbatim -->
+
+## Context
+
+<!-- One line: the question the investigation answered, if the request doesn't say it
+     ("make a report from this"). -->
 EOF
 
-fetch_vendor "$site"
+cat >"$ws/brief.md" <<EOF
+<!-- create-report: the investigation distilled (references/brief.md). Private, never published. -->
+# $title
+EOF
 
 cat <<EOF
 slug:      $slug
+template:  $template   (guide: $skill_dir/references/templates/$template.md)
 workspace: $ws
 prompt:    $ws/prompt.md   (private: write the verbatim request here)
+brief:     $ws/brief.md    (private: the investigation distilled, see references/brief.md)
 site:      $site           (everything here gets published)
+check:     node $skill_dir/scripts/check.mjs $site
 publish:   bash $skill_dir/scripts/publish.sh $slug
 EOF

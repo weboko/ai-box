@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TITLE}}</title>
+<!-- Keep this line: it switches the page to the drawing before first paint, and falls back to a plain document if the engine never boots. -->
+<script>document.documentElement.classList.add("js");setTimeout(function(){var b=document.body;if(b&&!b.classList.contains("bp-booted")){document.documentElement.classList.add("bp-failed");b.classList.remove("bp-canvas");}},8000);</script>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script> -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<body>
+
+<!-- Title block: pinned bottom-right on the drawing (top on a phone), the document header without JS.
+     The engine adds the toggle, the "Line key" label and a live SCALE field. -->
+<header class="bp-title">
+  <h1>{{TITLE}}</h1>
+  <p class="dek">TEMPLATE-TODO: one neutral line framing the topic.</p>
+  <p data-ev-legend="all"></p>
+  <dl class="fields">
+    <div><dt>Date</dt><dd><time data-meta="date">{{DATE}}</time></dd></div>
+    <!-- <div><dt>Prices as of</dt><dd>YYYY-MM-DD</dd></div> -->
+  </dl>
+  <details><summary>Metadata</summary><div class="meta-panel"></div></details>
+</header>
+
+<noscript><p class="nojs-note">JavaScript is off, so this is the drawing as a plain document at full detail.</p></noscript>
+
+<!-- The drawing. Regions are numbered and toured in source order and packed into balanced columns
+     automatically. Never set pixel sizes; pick a width class instead: data-size="s|m|l|xl" (default m).
+     data-span puts a region across the full width (sources). data-col="2" starts column 2 at that region. -->
+<main class="sheet">
+
+  <!-- class="tldr region" (tldr first) is required. data-title = the short name shown at L0, in the
+       breadcrumb and the tour. data-gloss = an optional red handwritten note under the L0 label. -->
+  <section class="tldr region" id="tldr" data-title="TL;DR" data-gloss="TEMPLATE-TODO short answer">
+    <h2>TL;DR</h2>
+    <!-- .lod1 = the summary, shown when zoomed out (L1). Plain rem-free prose; the layer sizes it. -->
+    <div class="lod1">
+      <p class="big">TEMPLATE-TODO: the answer in one sentence (L0 of the brief).</p>
+      <p>TEMPLATE-TODO: the 2–4 points that support it, with <span class="ev" data-ev="fact">a sourced claim</span><a class="cite" href="#src-todo"></a>.</p>
+      <p data-ev-legend="all"></p>
+      <p class="hint canvas-only">Zoom in for the full text (pinch, scroll or +). The › button walks the tour.</p>
+    </div>
+    <!-- .lod2 = the detail, shown when zoomed in (L2), swapped in place of .lod1. Group it in .card blocks:
+         each card is a tour stop. data-crumb names it in the breadcrumb (defaults to its h3). -->
+    <div class="lod2 cards">
+      <article class="card" data-crumb="The answer"><h3>The answer</h3><p>TEMPLATE-TODO: the short paragraph (L1 of the brief), evidence-marked.</p></article>
+      <article class="card" data-crumb="How to read this drawing"><h3>How to read this drawing</h3>
+        <p>Line style is evidence: solid = sourced [n], dashed = estimate, dotted = assumption, red handwriting = interpretation. Revision clouds mark sources that disagree.</p>
+        <p class="small">Zoom: scroll, pinch or + / −. Pan: drag or arrow keys. Tour: ‹ › or N / P. 0 shows the whole sheet. Prefer plain text? Use “Read as list”.</p></article>
+    </div>
+  </section>
+
+  <section class="region" id="findings" data-title="Key findings">
+    <h2>Key findings</h2>
+    <ol class="lod1 findings"><li><strong>TEMPLATE-TODO claim:</strong> the number.</li></ol>
+    <div class="lod2 cards">
+      <article class="card"><h3>1 · TEMPLATE-TODO claim</h3><p>TEMPLATE-TODO evidence.</p></article>
+    </div>
+  </section>
+
+  <!-- Anything that is neither .lod1 nor .lod2 shows at both levels and is sized to read at L1: figures,
+       photos, box diagrams. A chart here is drawn twice by the engine (a simple L1 copy, the full L2 one).
+       A [data-levels] figure follows the zoom: level 0 at L0, 1 at L1, 2 at L2. In .boxes, data-weights-at="2"
+       turns .items into a treemap at L2 (box area ∝ data-weight). data-stop makes an element a tour stop. -->
+  <section class="region" id="system" data-title="TEMPLATE-TODO" data-size="xl" data-l0="top">
+    <h2>TEMPLATE-TODO: the centrepiece diagram</h2>
+    <figure class="boxes" data-levels="Overview|Parts|Effort" data-weights-at="2">
+      <div class="lanes">
+        <div class="lane" data-weight="1">
+          <h4>TEMPLATE-TODO option A</h4>
+          <div class="box">TEMPLATE-TODO top</div>
+          <div class="box vendor">TEMPLATE-TODO owned by someone else<small data-from="1">TEMPLATE-TODO parts</small></div>
+        </div>
+        <div class="lane" data-weight="1.8">
+          <h4>TEMPLATE-TODO option B</h4>
+          <div class="box strong" data-to="0">TEMPLATE-TODO the whole thing</div>
+          <div class="group" data-from="1" data-stop data-crumb="TEMPLATE-TODO parts">
+            <p class="group-title">TEMPLATE-TODO parts</p>
+            <div class="items">
+              <div class="box" data-weight="2">TEMPLATE-TODO part<span class="badge" data-from="2">TEMPLATE-TODO effort</span></div>
+              <div class="box" data-weight="1">TEMPLATE-TODO part<span class="badge" data-from="2">TEMPLATE-TODO effort</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>TEMPLATE-TODO: what the diagram shows.</figcaption>
+    </figure>
+    <div class="lod1"><p>TEMPLATE-TODO: one-line summary of the diagram.</p></div>
+    <div class="lod2 cards"><article class="card"><h3>TEMPLATE-TODO detail</h3><p>TEMPLATE-TODO derivation or table.</p></article></div>
+  </section>
+
+  <!-- A dispute: class="cloud" draws a revision cloud; data-mark="A" labels it △A. -->
+  <section class="region cloud" id="dispute-a" data-title="Dispute A" data-mark="A">
+    <h2>Dispute A: TEMPLATE-TODO</h2>
+    <dl class="lod1 tags">
+      <dt>Side 1</dt><dd>TEMPLATE-TODO</dd>
+      <dt>Side 2</dt><dd>TEMPLATE-TODO</dd>
+      <dt>Resolved</dt><dd><span class="ev" data-ev="interpretation">TEMPLATE-TODO best reading</span></dd>
+    </dl>
+    <div class="lod2 reconcile">
+      <div class="claim card"><h4>TEMPLATE-TODO side 1</h4><p>TEMPLATE-TODO</p></div>
+      <div class="claim card"><h4>TEMPLATE-TODO side 2</h4><p>TEMPLATE-TODO</p></div>
+      <div class="verdict card"><h4>TEMPLATE-TODO best reading</h4><p>TEMPLATE-TODO reasoning or arithmetic (<span class="formula">a / b ≈ c</span>).</p></div>
+    </div>
+  </section>
+
+  <!-- With a model: tiles at L1, Report.controls via data-controls at L2, live outputs with data-out.
+  <section class="region" id="calculator" data-title="Calculator" data-size="l">
+    <h2>Calculator</h2>
+    <div class="lod1"><dl class="tiles"><div data-highlight="cheapest=a"><dt>Option A</dt><dd data-out="cost.a" data-format="currency">$0</dd></div></dl></div>
+    <div class="lod2 cards" data-cols="2">
+      <article class="card" data-crumb="Inputs"><h3>Inputs</h3><div data-controls="key1 key2"></div></article>
+      <article class="card" data-crumb="Outputs"><h3>Outputs</h3>
+        <dl class="outs"><div data-highlight="cheapest=a"><dt>Option A</dt><dd data-out="cost.a" data-format="currency">$0</dd></div></dl>
+        <ul class="warnings" data-out="warnings" data-show-if="warnings" hidden></ul></article>
+    </div>
+  </section> -->
+
+  <section class="region" id="recommendation" data-title="Recommendation">
+    <h2>Recommendation <span class="stamp">AI judgement</span></h2>
+    <ol class="lod1 findings"><li><span class="ev" data-ev="interpretation">TEMPLATE-TODO now:</span> the action.</li></ol>
+    <ol class="lod2 recs cards"><li class="card" data-priority="high"><strong>TEMPLATE-TODO action.</strong> Why, and what it depends on.</li></ol>
+  </section>
+
+  <section class="region" id="risks" data-title="Risks">
+    <h2>Risks &amp; unknowns</h2>
+    <ul class="lod1 findings"><li>TEMPLATE-TODO risk in a few words.</li></ul>
+    <ul class="lod2 risks cards"><li class="card" data-level="medium"><strong>TEMPLATE-TODO risk.</strong> Impact, and how to reduce it.</li></ul>
+  </section>
+
+  <section class="region" id="next-steps" data-title="Next steps">
+    <h2>Next steps</h2>
+    <ol class="lod1 findings"><li>TEMPLATE-TODO action.</li></ol>
+    <div class="lod2 cards"><article class="card"><h3>Steps</h3><ol class="next"><li><strong>TEMPLATE-TODO action.</strong> What it settles.</li></ol></article></div>
+  </section>
+
+  <!-- Sources: one ol.sources in an L2 block. The engine adds an L1 parts list and "used in" lines. -->
+  <section class="region" id="sources" data-title="Sources" data-span>
+    <h2>Sources: parts list</h2>
+    <div class="lod2">
+      <ol class="sources">
+        <li id="src-todo"><a href="https://example.com/">TEMPLATE-TODO source title</a>, accessed {{DATE}}.</li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

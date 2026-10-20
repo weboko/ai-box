@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="TEMPLATE-TODO: one neutral sentence on what this paper examines.">
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script>   only if the report has a model -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<body>
+<a class="skip" href="#main">Skip to text</a>
+
+<!-- Running head: template.js adds the current § and the detail-level control. -->
+<header class="runhead" id="runhead">
+  <div class="rh-inner"><p class="rh-where"><span class="rh-paper">TEMPLATE-TODO kicker, e.g. Working Paper</span></p></div>
+</header>
+
+<!-- One reading level for the whole page: data-min="n" shows an element from level n,
+     data-max="n" up to level n. Levels: 0 Abstract, 1 Brief, 2 Full, 3 Appendix. -->
+<main id="main" class="paper" tabindex="-1">
+
+<header class="titleblock">
+  <h1>{{TITLE}}</h1>
+  <p class="subtitle">TEMPLATE-TODO: the dek, a neutral framing of the question.</p>
+  <p class="authors"><span class="nw"><span data-meta="agent">TEMPLATE-TODO agent</span><sup>†</sup></span> · <span class="nw">model <span data-meta="model">TEMPLATE-TODO model</span></span> · <span class="nw"><time data-meta="date" datetime="{{DATE}}">{{DATE}}</time></span></p>
+  <p class="affil"><sup>†</sup>TEMPLATE-TODO: role of the author; "prices as of …" or other as-of date.</p>
+  <details class="meta"><summary>Report metadata</summary><div class="meta-panel"></div></details>
+</header>
+
+<!-- Abstract = the TL;DR (level 0). Bold answer first, then the 2–4 points that carry it. -->
+<section class="tldr" id="abstract">
+  <h2>Abstract</h2>
+  <p><b>TEMPLATE-TODO: the answer in one sentence.</b> TEMPLATE-TODO: the supporting points, with
+    <span class="ev" data-ev="estimate">an estimate</span>, <span class="ev" data-ev="assumption">an assumption</span>,
+    a sourced fact<a class="cite" href="#src-todo"></a> and <span class="ev" data-ev="interpretation">a judgement</span>.</p>
+  <!-- The notation paragraph (evidence legend) and the reading-level hint are generated here. -->
+  <aside class="notation" aria-label="Notation"><p data-ev-legend></p></aside>
+</section>
+
+<!-- Contents: generated from the sections, with the level at which each part first appears. -->
+<nav class="toc" id="toc"></nav>
+
+<!-- Numbered sections: <section class="sec">. h2 and h3 are numbered (1, 1.1) by the template.
+     The Brief text of a passage is data-max="1", its Full rewrite data-min="2". -->
+<section class="sec" id="sec-todo" data-min="1">
+  <h2>TEMPLATE-TODO section title</h2>
+  <p data-max="1">TEMPLATE-TODO: the Brief version (one short paragraph). <a class="xref" href="#tab-todo"></a> has the detail.</p>
+  <p data-min="2">TEMPLATE-TODO: the Full rewrite of the same paragraph. Cross-references stay empty:
+    <a class="xref" href="#tab-todo"></a>, <a class="xref" href="#eq-todo"></a>.</p>
+
+  <!-- Table: figure.tbl, caption above. Numbered "Table n" automatically. -->
+  <figure class="tbl" id="tab-todo" data-min="2">
+    <figcaption>TEMPLATE-TODO: what the table shows.</figcaption>
+    <div class="table-wrap"><table class="booktabs">
+      <thead><tr><th scope="col">TEMPLATE-TODO item</th><th scope="col" class="num">Value</th></tr></thead>
+      <tbody><tr><td>TEMPLATE-TODO</td><td class="num"><span class="ev" data-ev="estimate">0</span></td></tr></tbody>
+    </table></div>
+  </figure>
+
+  <!-- Equation: number "(n)" is added on the right. -->
+  <div class="eqn" id="eq-todo" data-min="2"><span class="eqb">x = <span class="frac"><span>a − b</span><span>c</span></span> ≈ <span class="ev" data-ev="estimate">TEMPLATE-TODO</span></span></div>
+
+  <!-- Figures: core charts (figure.chart), box diagrams (figure.boxes), photos (figure.photo = "Plate n").
+       A layered figure with data-follow="page" takes the page level instead of its own buttons. -->
+</section>
+
+<!-- Appendix: section.appendix → "Appendix A", tables "Table A.1", equations "(A1)". -->
+<section class="sec appendix" id="sec-appendix" data-min="3">
+  <h2>TEMPLATE-TODO appendix title</h2>
+  <p>TEMPLATE-TODO: derivations, method, data.</p>
+</section>
+
+<section class="sec refs" id="refs" data-min="1">
+  <h2>References</h2>
+  <ol class="sources">
+    <li id="src-todo"><a href="https://example.org/TEMPLATE-TODO">TEMPLATE-TODO source title</a>, accessed {{DATE}}.</li>
+  </ol>
+</section>
+
+<footer class="colophon" data-min="1">
+  <p>Set in Computer Modern (CMU, SIL Open Font License).</p>
+</footer>
+</main>
+</body>
+</html>

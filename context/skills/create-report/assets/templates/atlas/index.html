@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script> -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<!-- Atlas guide: references/templates/atlas.md. The engine builds the map, the pages, the
+     breadcrumbs, the locator inset, the legend and the index from this markup. Without
+     JavaScript the same markup reads top to bottom as one document. -->
+<header class="atlas-top"><a class="brand" href="#world">TEMPLATE-TODO short atlas name</a></header>
+
+<main id="main" tabindex="-1">
+
+<!-- WORLD: the first page. Cartouche (title, dek, key, TL;DR), the generated world map
+     (<div data-map>), highlights. The plate list is generated after it. -->
+<section class="world" id="world" data-weight-means="TEMPLATE-TODO what territory size means, e.g. how much each part weighs in the decision.">
+  <header class="cartouche">
+    <div class="ct-title">
+      <h1>{{TITLE}}</h1>
+      <p class="ctail">TEMPLATE-TODO dek: a neutral framing of the topic.</p>
+      <p class="csub">TEMPLATE-TODO kicker · <time data-meta="date">{{DATE}}</time> · <span data-meta="reading-time"></span></p>
+      <p class="csub"><a href="#r-first">TEMPLATE-TODO Go straight to the recommendation →</a></p>
+      <p class="ckey"><b>Key</b> <span data-ev-legend="all"></span></p>
+    </div>
+    <section class="tldr" id="tldr">
+      <h2>TL;DR</h2>
+      <p class="l0">TEMPLATE-TODO the answer in one sentence (L0).</p>
+      <p>TEMPLATE-TODO the short paragraph (L1) with evidence marks: <span class="ev" data-ev="fact">a sourced claim</span><a class="cite" href="#src-example"></a>, <span class="ev" data-ev="estimate" data-note="how it was worked out">an estimate</span>, <span class="ev" data-ev="interpretation">a judgement</span>.</p>
+    </section>
+  </header>
+
+  <div data-map></div>
+
+  <section class="highlights">
+    <h2>Survey highlights</h2>
+    <ol class="findings">
+      <li><strong>TEMPLATE-TODO claim.</strong> Evidence. <a class="seeplate" href="#r-first">Plate I First region →</a></li>
+    </ol>
+  </section>
+</section>
+
+<!-- REGION = PLATE. One article per region, in reading order (I, II, III…).
+     data-weight: relative area on the world map. data-kind: land (default) | disputed
+     (hatched, contested borders) | island | reef (hazards) | route (data-from, data-to) |
+     flag (the recommendation; data-to points at a place). Optional: data-label (short map
+     label), data-sub (map sub-label), data-unit (place areas drawn to scale), data-ridge
+     (id of a line chart drawn as ridges), data-tint (1–6), data-shape (SVG path override). -->
+<article class="plate" id="r-first" data-region data-name="TEMPLATE-TODO First region" data-weight="3"
+  data-l0="TEMPLATE-TODO one line for the map preview and the gazetteer.">
+  <h2>TEMPLATE-TODO First region</h2>
+  <p class="l0">TEMPLATE-TODO this region's answer in one line (L0).</p>
+  <!-- .lead sits beside the plate map on wide screens -->
+  <div class="lead">
+    <p>TEMPLATE-TODO short paragraph (L1).</p>
+  </div>
+  <section>
+    <h3>TEMPLATE-TODO detail section (L2)</h3>
+    <p>TEMPLATE-TODO detail, a chart, a table or a box diagram from core.md.</p>
+  </section>
+
+  <!-- PLACE: nested inside its region. Drawn as a district inside the region (area ∝
+       data-weight) or, with data-kind="point", as a survey point. Optional data-n (number
+       badge), data-label, data-sub. Holds the derivations and evidence (L3). -->
+  <article class="place" data-place id="p-first" data-name="TEMPLATE-TODO First place" data-weight="1"
+    data-l0="TEMPLATE-TODO one line for the preview.">
+    <h3>TEMPLATE-TODO First place</h3>
+    <p class="l0">TEMPLATE-TODO this place in one line.</p>
+    <p class="calc"><span class="ev" data-ev="estimate" data-note="TEMPLATE-TODO the arithmetic">TEMPLATE-TODO a derivation</span></p>
+  </article>
+  <article class="place" data-place id="p-second" data-name="TEMPLATE-TODO Second place" data-weight="2">
+    <h3>TEMPLATE-TODO Second place</h3>
+    <p class="l0">TEMPLATE-TODO this place in one line.</p>
+  </article>
+</article>
+
+<article class="plate" id="r-second" data-region data-kind="disputed" data-name="TEMPLATE-TODO Contested ground" data-weight="2">
+  <h2>TEMPLATE-TODO Contested ground</h2>
+  <p class="l0">TEMPLATE-TODO where credible sources disagree.</p>
+  <div class="reconcile">
+    <div class="claim"><h4>TEMPLATE-TODO Side 1</h4><p>TEMPLATE-TODO claim.</p></div>
+    <div class="claim"><h4>TEMPLATE-TODO Side 2</h4><p>TEMPLATE-TODO claim.</p></div>
+    <div class="verdict"><h4>Reconciliation</h4><p>TEMPLATE-TODO the reasoning or arithmetic.</p></div>
+  </div>
+</article>
+
+<!-- SEA FEATURES: data-kind="island" for tools and side topics (a calculator, a comparison
+     table), "reef" for hazards. In a calculator plate, <div data-controls="key1,key2"></div>
+     renders the model's sliders; .tiles[data-best="path"] marks the tile whose data-key
+     equals that model value; <ul data-list="path"> lists an array of strings. -->
+<article class="plate" id="r-hazards" data-region data-kind="reef" data-name="Hazards" data-sub="TEMPLATE-TODO sub-label">
+  <h2>Hazards</h2>
+  <p class="l0">TEMPLATE-TODO risks in one line.</p>
+  <ul class="risks">
+    <li data-level="high"><strong>TEMPLATE-TODO risk.</strong> Impact, and how to reduce it.</li>
+  </ul>
+</article>
+
+<article class="plate" id="r-plan" data-region data-kind="flag" data-to="p-first" data-name="Expedition Plan" data-sub="TEMPLATE-TODO recommended landing">
+  <h2>Expedition Plan</h2>
+  <p class="l0">TEMPLATE-TODO recommendation in one line.</p>
+  <ol class="recs"><li data-priority="high"><strong>TEMPLATE-TODO do X.</strong> Why, and what it depends on.</li></ol>
+  <ol class="next"><li><strong>TEMPLATE-TODO action.</strong> What it settles.</li></ol>
+  <!-- filled with the plates this reader has not opened yet -->
+  <p data-uncharted></p>
+</article>
+
+<!-- SOURCES: the appendix page. [n] citations link here. -->
+<section class="atlas-sources" id="sources">
+  <h2>Sources</h2>
+  <ol class="sources">
+    <li id="src-example"><a href="https://example.com/">TEMPLATE-TODO Publisher — Title</a>, accessed {{DATE}}.</li>
+  </ol>
+  <details class="colophon"><summary>Colophon: report metadata</summary><div class="meta-panel"></div></details>
+</section>
+
+</main>
+<footer class="atlas-foot">TEMPLATE-TODO atlas name · <time data-meta="date">{{DATE}}</time> · <a href="#sources">Sources</a></footer>
+</body>
+</html>

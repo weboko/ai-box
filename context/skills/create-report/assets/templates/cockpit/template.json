@@ -1,0 +1,26 @@
+{
+  "order": 4,
+  "title": "Cockpit",
+  "pitch": "A live dashboard on a light datasheet: global condition sliders recompute every tile, and each tile opens a drawer with Summary, Evidence and Derivation.",
+  "bestFor": "Quantitative decisions with a live model, where readers change assumptions and check one number's derivation at a time (build-vs-buy, pricing, capacity planning, business cases).",
+  "weakness": "No linear narrative: an argument meant to be read top to bottom gets scattered across tiles and drawers, and prose-heavy blocks feel cramped as tiles.",
+  "aliases": [
+    "cockpit",
+    "dashboard",
+    "board",
+    "control panel",
+    "datasheet"
+  ],
+  "signals": [
+    "a model with 3–6 inputs the reader would change",
+    "several headline numbers (KPIs) that move together",
+    "per-number derivations worth checking",
+    "comparison of options on cost or capacity"
+  ],
+  "avoid": [
+    "no quantitative model or headline numbers",
+    "an essay or argument to read in order",
+    "a story that depends on time or sequence",
+    "mostly qualitative prose"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "order": 2,
+  "title": "Working Paper",
+  "pitch": "A LaTeX-style working paper with one reading level for the whole page (Abstract, Brief, Full, Appendix) that rewrites the text in place.",
+  "bestFor": "Quantitative or methodological findings that readers check: derivations, numbered equations, booktabs tables, numbered references, and readers who stop at different depths (the founder reads the Abstract, the engineer reads Full).",
+  "weakness": "A long single column with little visual pull; dense on a phone at Full or Appendix; the typographic evidence code (italic vs roman) is subtle.",
+  "aliases": ["paper", "working paper", "academic", "LaTeX", "research paper", "whitepaper", "arXiv style", "technical report"],
+  "signals": ["derivations or formulas the reader should be able to check", "several tables of numbers", "a cost or sizing model with a handful of inputs", "conflicting published figures to reconcile with arithmetic", "audiences that need different depths of the same argument"],
+  "avoid": ["dashboards or status updates to scan", "answers that depend on time or phases", "many parts whose relationships are the point (use a map or canvas)", "short, mostly qualitative reports with no numbers to check"]
+}

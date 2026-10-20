@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Self-host Firecracker on Hetzner, or rent E2B / Modal?</title>
+<script>document.documentElement.classList.add("js");setTimeout(function(){var b=document.body;if(b&&!b.classList.contains("bp-booted")){document.documentElement.classList.add("bp-failed");b.classList.remove("bp-canvas");}},8000);</script>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<script defer src="assets/model.js"></script>
+<script defer src="assets/template/template.js"></script>
+</head>
+<body>
+
+<header class="bp-title">
+  <h1>Self-host Firecracker on Hetzner, or rent E2B / Modal?</h1>
+  <p class="dek">A sandbox decision for a 2-person dev-tools startup. Costs, cold starts and the labor nobody prices in.</p>
+  <p data-ev-legend="all"></p>
+  <dl class="fields">
+    <div><dt>Date</dt><dd><time data-meta="date">2026-10-18</time></dd></div>
+    <div><dt>Prices as of</dt><dd>2026-10-18</dd></div>
+  </dl>
+  <p class="keynote">Estimates are calculated from sourced inputs. Assumptions (FX 1 EUR = 1.16 USD, workload, labor) can be changed in the calculator (10).</p>
+  <details><summary>Metadata</summary><div class="meta-panel"></div></details>
+</header>
+
+<noscript><p class="nojs-note">JavaScript is off, so this is the drawing as a plain document at full detail. Zooming, the charts and the calculator need JavaScript; the tables carry the report's default numbers.</p></noscript>
+
+<main class="sheet">
+
+  <!-- 01 ============================================================ -->
+  <section class="tldr region" id="tldr" data-title="TL;DR" data-gloss="Rent: E2B first">
+    <h2>TL;DR</h2>
+    <div class="lod1">
+      <p class="big">Rent (E2B first). Self-hosting only wins on hardware; once your own time is priced in, the break-even moves from <span class="ev" data-ev="estimate">~500</span> to <span class="ev" data-ev="estimate">~13,000–32,000 sandbox-hours a month</span>.</p>
+      <p>Firecracker is the easy part: the platform around it is <span class="ev" data-ev="fact">12–18 engineer-months</span><a class="cite" href="#src-pandastack-build"></a>. <span class="ev" data-ev="interpretation">For two people that is the whole company for half a year.</span></p>
+      <p data-ev-legend="all"></p>
+      <p class="hint canvas-only">Zoom in for the full text (pinch, scroll or +). The › button walks the tour.</p>
+    </div>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="The answer">
+        <h3>The answer</h3>
+        <p><strong>Rent (E2B first). Self-hosting only wins on hardware; once your own time is priced in, the break-even moves from <span class="ev" data-ev="estimate">~500</span> to <span class="ev" data-ev="estimate">~13,000–32,000 sandbox-hours a month</span>.</strong></p>
+        <p>Two Hetzner AX42 boxes cost about as much as <span class="ev" data-ev="estimate" data-note="2 × (€97.30 + €49/24) × 1.16 = $230.47/month; (230.47 − 150) / 0.1656 ≈ 490 h">~490 sandbox-hours/month on E2B Pro</span>. But Firecracker itself is the easy part: networking, snapshots, scheduling and an in-VM agent are <span class="ev" data-ev="fact">12–18 engineer-months for a production platform</span><a class="cite" href="#src-pandastack-build"></a>, and <span class="ev" data-ev="fact">ops labor dominates below a few thousand sandbox-hours a month</span><a class="cite" href="#src-bex-easy5"></a>. <span class="ev" data-ev="interpretation">For a two-person team that is the whole company for half a year.</span></p>
+        <p>Start on E2B (Firecracker isolation, pause/resume) or Modal Starter (<span class="ev" data-ev="estimate" data-note="150 / (0.2380 − 0.1656)">cheapest below ~2,070 h/month</span>); keep an exit path; re-check at <span class="ev" data-ev="estimate interpretation">~$5k/month of sandbox spend</span>.</p>
+      </article>
+      <article class="card" data-crumb="How to read this drawing">
+        <h3>How to read this drawing</h3>
+        <p>The sheet is the architecture: the managed path and the self-host path are drawn as two stacks in region 04; costs, disputes and the calculator sit around them. Box area in the self-host stack encodes build effort.</p>
+        <ul>
+          <li>Line style is evidence: see the line key in the title block. [n] links to the parts list (15).</li>
+          <li>Hatched boxes are vendor-owned.</li>
+          <li>Revision clouds mark sources that disagree.</li>
+        </ul>
+        <p class="small">Zoom: scroll, pinch or + / −. Pan: drag or arrow keys. Tour: ‹ › or N / P. 0 shows the whole sheet. Prefer plain text? Use “Read as list”.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 ============================================================ -->
+  <section class="region" id="findings" data-title="Key findings">
+    <h2>Key findings</h2>
+    <ol class="lod1 findings">
+      <li><strong>Hardware math favours self-hosting early:</strong> break-even <span class="ev" data-ev="estimate">≈ 490 h/month</span>.</li>
+      <li><strong>Labor flips it:</strong> <span class="ev" data-ev="estimate">~13,000 h</span> with ops time, <span class="ev" data-ev="estimate">~32,000 h</span> with a build.</li>
+      <li><strong>Hetzner got ~2× pricier</strong> for new orders on 15 June 2026<a class="cite" href="#src-hetzner-price-2026"></a>.</li>
+      <li><strong>Hetzner Cloud VMs are out:</strong> no /dev/kvm<a class="cite" href="#src-ellis-nokvm"></a>.</li>
+      <li><strong>Cold starts disagree ~5×:</strong> <span class="ev" data-ev="interpretation">they measure different things</span>.</li>
+      <li><strong>Modal vs E2B is fee vs rate:</strong> crossover <span class="ev" data-ev="estimate">≈ 2,070 h/month</span>.</li>
+    </ol>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="1 Hardware math"><h3>1 · Hardware math favours self-hosting early</h3><p>Break-even vs E2B Pro on hardware alone <span class="ev" data-ev="estimate">≈ 490 sandbox-hours/month</span>, consistent with an <span class="ev" data-ev="fact">independent ~400 h/month estimate</span><a class="cite" href="#src-bex-150"></a> even after <span class="ev" data-ev="fact">Hetzner's 2026 price rises</span><a class="cite" href="#src-hetzner-price-2026"></a>.</p></article>
+      <article class="card" data-crumb="2 Labor flips it"><h3>2 · Labor flips it</h3><p>Adding <span class="ev" data-ev="assumption">20 ops-hours/month</span> pushes break-even to <span class="ev" data-ev="estimate">~13,000 h/month (~18 sandboxes running 24/7)</span>; adding a <span class="ev" data-ev="assumption">4-engineer-month build</span> pushes it to <span class="ev" data-ev="estimate">~32,000 h/month</span>.</p></article>
+      <article class="card" data-crumb="3 Hetzner repricing"><h3>3 · Hetzner got ~2× more expensive</h3><p>For new orders on 15 June 2026: <span class="ev" data-ev="fact">AX42-1 is now €97.30/month + €49 setup</span><a class="cite" href="#src-hetzner-price-2026"></a>; <span class="ev" data-ev="fact">cloud CPX42 went €25.49 → €69.49</span><a class="cite" href="#src-hetzner-price-2026"></a>. <span class="ev" data-ev="interpretation">Blog break-evens using pre-June prices are stale.</span></p></article>
+      <article class="card" data-crumb="4 No Hetzner Cloud"><h3>4 · Hetzner Cloud VMs are not an option</h3><p><span class="ev" data-ev="fact">Firecracker needs /dev/kvm, which requires nested virtualization on cloud VMs</span><a class="cite" href="#src-ellis-nokvm"></a>; plan on <span class="ev" data-ev="fact">dedicated AX servers, where KVM works</span><a class="cite" href="#src-pandastack-metal"></a>. <span class="ev" data-ev="assumption">Hetzner does not document nested virt on Cloud.</span></p></article>
+      <article class="card" data-crumb="5 Cold starts"><h3>5 · Cold-start numbers disagree by ~5×</h3><p>150 ms claimed vs 264–717 ms measured, because they measure different things; <span class="ev" data-ev="interpretation">for agent UX the gap is small</span>. See <a href="#dispute-b">dispute B</a>.</p></article>
+      <article class="card" data-crumb="6 Fee vs rate"><h3>6 · Modal vs E2B is a fee-vs-rate trade</h3><p>Modal costs <span class="ev" data-ev="estimate">$0.238/h</span> for 2 vCPU / 4 GiB vs E2B's <span class="ev" data-ev="estimate">$0.166/h</span>, but has no plan fee; <span class="ev" data-ev="fact">E2B Hobby's 1-hour session and 20-sandbox caps push real use to Pro at $150/month</span><a class="cite" href="#src-e2b-pricing"></a>. Crossover <span class="ev" data-ev="estimate">≈ 2,070 h/month</span>.</p></article>
+    </div>
+  </section>
+
+  <!-- 03 ============================================================ -->
+  <section class="region" id="context" data-title="Context" data-size="l">
+    <h2>Context: what is actually being compared</h2>
+    <div class="lod1">
+      <p class="big">Three ways to give an agent a disposable Linux box: E2B (Firecracker microVMs), Modal (gVisor containers), or your own Firecracker fleet.</p>
+      <p><span class="ev" data-ev="fact">E2B: one microVM with its own kernel per sandbox</span><a class="cite" href="#src-northflank"></a>. <span class="ev" data-ev="fact">Modal: gVisor by default, VMs optional</span><a class="cite" href="#src-modal-sandboxes"></a>. <span class="ev" data-ev="fact">Self-host: Firecracker under its jailer on KVM bare metal</span><a class="cite" href="#src-firecracker"></a>.</p>
+    </div>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="The three paths"><h3>The three paths</h3><p><span class="ev" data-ev="fact">E2B runs each sandbox as a Firecracker microVM with its own kernel</span><a class="cite" href="#src-northflank"></a>. <span class="ev" data-ev="fact">Modal Sandboxes default to gVisor, a user-space kernel that intercepts syscalls; VMs are an alternative</span><a class="cite" href="#src-modal-sandboxes"></a>. <span class="ev" data-ev="fact">Self-hosting means running Firecracker under its <code>jailer</code> on KVM-capable bare metal</span><a class="cite" href="#src-firecracker"></a>.</p></article>
+      <article class="card" data-crumb="Isolation"><h3>Isolation</h3><ul>
+        <li><strong>Firecracker:</strong> <span class="ev" data-ev="fact">hardware virtualization boundary, jailer as “a second line of defense”</span><a class="cite" href="#src-firecracker"></a>.</li>
+        <li><strong>gVisor:</strong> <span class="ev" data-ev="fact">stronger than namespaces, lighter than a VM</span><a class="cite" href="#src-northflank"></a>.</li>
+        <li><strong>Self-host</strong> gets E2B-grade isolation only if you keep seccomp/jailer config tight, <span class="ev" data-ev="fact">“a permanent line item”</span><a class="cite" href="#src-pandastack-build"></a>.</li></ul></article>
+      <article class="card" data-crumb="E2B limits"><h3>E2B limits</h3><ul>
+        <li><span class="ev" data-ev="fact">Hobby: 1 h sessions, 20 concurrent</span><a class="cite" href="#src-e2b-pricing"></a></li>
+        <li><span class="ev" data-ev="fact">Pro: 24 h, 100 concurrent, $150/month</span><a class="cite" href="#src-e2b-pricing"></a></li>
+        <li><span class="ev" data-ev="fact">Enterprise: $3,000/month minimum, BYOC available</span><a class="cite" href="#src-e2b-pricing"></a></li></ul></article>
+      <article class="card" data-crumb="Modal limits"><h3>Modal limits</h3><ul>
+        <li><span class="ev" data-ev="fact">Default sandbox lifetime 5 min, max 24 h</span><a class="cite" href="#src-modal-sandboxes"></a></li>
+        <li><span class="ev" data-ev="fact">Starter: 100 containers</span><a class="cite" href="#src-modal-pricing"></a></li>
+        <li><span class="ev" data-ev="fact">Team: 5,000 containers at $250/month</span><a class="cite" href="#src-modal-pricing"></a></li></ul></article>
+    </div>
+  </section>
+
+  <!-- 04 ============================================================ -->
+  <!-- The centrepiece: a core box diagram. Its levels follow the zoom (L0 → Overview, L1 → Components, L2 → Effort);
+       at Effort the self-host components become a treemap, box area ∝ data-weight (midpoint engineer-months). -->
+  <section class="region" id="architecture" data-title="Architecture" data-size="xl" data-l0="top">
+    <h2>Architecture: what you'd own in each path</h2>
+    <figure class="boxes" data-levels="Overview|Components|Effort" data-weights-at="2">
+      <div class="lanes">
+        <div class="lane" data-weight="1">
+          <h4>Managed path</h4>
+          <p class="lane-sub">you own the top two boxes</p>
+          <div class="box">Your agent / app<small data-from="1">calls create · exec · files · pause · kill</small></div>
+          <div class="box">E2B or Modal SDK / API</div>
+          <div class="box vendor">Vendor-owned platform<small data-from="1">control plane · scheduler · template builds · snapshots · networking · observability</small><small data-from="2">The vendor builds, runs and pages for these. You pay per second instead: <span class="ev" data-ev="estimate">E2B $0.1656/h</span>, <span class="ev" data-ev="estimate">Modal $0.2380/h</span> (2 vCPU / 4 GiB).</small><span class="ev redline" data-ev="interpretation" data-from="1">same 8 boxes, not your pager</span></div>
+          <div class="box vendor">microVM (E2B) / gVisor container (Modal)<small data-from="2"><span class="ev" data-ev="fact">E2B: Firecracker, own kernel</span><a class="cite" href="#src-northflank"></a>. <span class="ev" data-ev="fact">Modal: gVisor default, VMs optional</span><a class="cite" href="#src-modal-sandboxes"></a>.</small></div>
+          <div class="box vendor" data-from="1">Vendor's fleet</div>
+        </div>
+        <div class="lane" data-weight="1.8">
+          <h4>Self-host path</h4>
+          <p class="lane-sub"><span class="ev" data-ev="fact">you own every box</span><a class="cite" href="#src-bex-easy5"></a></p>
+          <div class="box">Your agent / app</div>
+          <div class="box strong" data-to="0">Your platform<small>8 components you build and run</small></div>
+          <div class="group" data-from="1" data-stop data-crumb="Self-host platform">
+            <p class="group-title">Your platform: 8 components</p>
+            <div class="items">
+              <div class="box" data-weight="1"><span><b>1</b>API + lifecycle</span><small data-from="2">auth, rate limits, caps</small></div>
+              <div class="box" data-weight="1"><span><b>8</b>Governance</span><small data-from="2">concurrency limits, timeouts, quotas</small></div>
+              <div class="box" data-weight="1"><span><b>7</b>Observability</span><small data-from="2">metrics, logs, metering</small><span class="badge" data-from="2">1+7+8: 2–4 mo</span></div>
+              <div class="box" data-weight="2.5"><span><b>4</b>Snapshot store</span><small data-from="2">versioning, GC; capture, store, multi-host distribution</small><span class="badge" data-from="2">2–3 eng-mo</span></div>
+              <div class="box" data-weight="2.5"><span><b>6</b>In-VM agent</span><small data-from="2">exec, streaming, filesystem, PTY</small><span class="badge" data-from="2">2–3 eng-mo</span></div>
+              <div class="box" data-weight="1.5"><span><b>2</b>Scheduler</span><small data-from="2">placement, warm pool, bin-packing</small><span class="badge" data-from="2">1–2 eng-mo</span></div>
+              <div class="box" data-weight="1.5"><span><b>3</b>Template pipeline</span><small data-from="2">OCI image → ext4 rootfs, copy-on-write</small><span class="badge" data-from="2">1–2 eng-mo</span></div>
+              <div class="box" data-weight="1.5"><span><b>5</b>Networking</span><small data-from="2">TAP/veth, bridge, iptables, egress proxy</small><span class="badge" data-from="2">1–2 eng-mo</span></div>
+              <div class="box" data-weight="1.5"><span>jailer + seccomp hardening</span><span class="badge" data-from="2">1–2 eng-mo, then permanent</span></div>
+            </div>
+            <p class="dimension" data-from="2">12–18 eng-months<a class="cite" href="#src-pandastack-build"></a></p>
+          </div>
+          <div class="box hl tiny">Firecracker<small data-from="1"><span class="ev" data-ev="fact">“the easy 5%”</span><a class="cite" href="#src-bex-easy5"></a></small></div>
+          <div class="box" data-from="1">KVM: needs <code>/dev/kvm</code><a class="cite" href="#src-ellis-nokvm"></a></div>
+          <div class="box strong">Hetzner AX dedicated server<small data-from="1">KVM works<a class="cite" href="#src-pandastack-metal"></a></small></div>
+          <div class="box ruled-out ev" data-ev="assumption" data-from="1"><span>✗ Hetzner Cloud VM</span><small data-from="2"><span class="ev" data-ev="fact">Firecracker on a cloud VM needs nested virt</span><a class="cite" href="#src-ellis-nokvm"></a>; Hetzner does not document it on Cloud.</small></div>
+        </div>
+      </div>
+      <figcaption><span data-to="1">Two stacks: the vendor owns everything below its SDK; self-hosting, you own every box down to the server.</span><span data-from="2">Box names from <a class="cite" href="#src-bex-easy5"></a>; engineer-months from <a class="cite" href="#src-pandastack-build"></a> (a sandbox vendor, so a conflict of interest). <span class="ev" data-ev="estimate" data-note="each box's area is proportional to the midpoint of its engineer-month range; 1, 7 and 8 share one 2–4 line">Box area ∝ midpoint engineer-months</span>.</span></figcaption>
+    </figure>
+    <div class="lod1">
+      <p><span class="ev" data-ev="fact">Firecracker is “the easy 5%”</span><a class="cite" href="#src-bex-easy5"></a>: the platform around it is <span class="ev" data-ev="fact">12–18 engineer-months</span><a class="cite" href="#src-pandastack-build"></a>. <span class="ev redline" data-ev="interpretation">For 2 people: the whole company for half a year.</span></p>
+    </div>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="Build effort"><h3>Build effort per component</h3>
+        <div class="table-wrap"><table class="compare">
+          <thead><tr><th>Component (vendor estimate<a class="cite" href="#src-pandastack-build"></a>)</th><th class="num">Eng-months</th></tr></thead>
+          <tbody>
+            <tr><td>Networking (netns/veth/tap, IP allocator, orphan reclaimer)</td><td class="num ev" data-ev="fact">1–2</td></tr>
+            <tr><td>Snapshots (capture, store, multi-host distribution)</td><td class="num ev" data-ev="fact">2–3</td></tr>
+            <tr><td>Scheduler (heartbeats, scoring, leases)</td><td class="num ev" data-ev="fact">1–2</td></tr>
+            <tr><td>Copy-on-write rootfs</td><td class="num ev" data-ev="fact">1–2</td></tr>
+            <tr><td>Guest agent (exec, streaming, FS, PTY)</td><td class="num ev" data-ev="fact">2–3</td></tr>
+            <tr><td>Security hardening</td><td class="num ev" data-ev="fact">1–2, then permanent</td></tr>
+            <tr><td>Lifecycle, metering, observability</td><td class="num ev" data-ev="fact">2–4</td></tr>
+            <tr><th>Total to production multi-tenant</th><th class="num">12–18</th></tr>
+          </tbody></table></div>
+        <p class="small">PandaStack sells a sandbox product: conflict of interest disclosed.</p>
+      </article>
+      <article class="card" data-crumb="Firecracker itself"><h3>Firecracker itself</h3>
+        <p><span class="ev" data-ev="fact">Firecracker is “the easy 5%”</span><a class="cite" href="#src-bex-easy5"></a>: it boots in <span class="ev" data-ev="fact">&lt;125 ms</span><a class="cite" href="#src-firecracker"></a> with <span class="ev" data-ev="fact">&lt;5 MiB overhead per VM</span><a class="cite" href="#src-firecracker"></a>. Everything above it in the stack is yours to build.</p>
+        <p><span class="ev" data-ev="interpretation">For 2 people, 12–18 engineer-months is the whole company for half a year.</span></p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 05 ============================================================ -->
+  <section class="region" id="site" data-title="Site: Hetzner" data-size="s">
+    <h2>Site: Hetzner Falkenstein</h2>
+    <figure class="photo" data-zoom>
+      <img src="images/hetzner-falkenstein.jpg" alt="Aerial photo of Hetzner's Falkenstein datacenter park: rows of low grey datacenter halls in green countryside." loading="lazy" width="1280" height="638">
+      <figcaption>Where your “self-hosted” sandboxes would physically live: Hetzner's Falkenstein (DE) park. Dedicated AX servers here expose KVM; Cloud VMs don't document it. <span class="credit">Photo 2013: Hetzner Online GmbH, CC BY-SA 4.0, via Wikimedia Commons<a class="cite" href="#src-commons-photo"></a></span></figcaption>
+    </figure>
+    <div class="lod1"><p>AX42: <span class="ev" data-ev="fact">€97.30/month + €49 setup</span><a class="cite" href="#src-hetzner-price-2026"></a> · <span class="ev" data-ev="assumption">14 sandboxes per box</span></p></div>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="Boxes &amp; prices"><h3>Boxes &amp; prices</h3><ul>
+        <li><span class="ev" data-ev="fact">AX42-1: 8-core Ryzen 7 PRO 8700GE, 64 GB DDR5 ECC</span><a class="cite" href="#src-hetzner-ax"></a>: <span class="ev" data-ev="fact">€97.30/month + €49 setup</span><a class="cite" href="#src-hetzner-price-2026"></a></li>
+        <li><span class="ev" data-ev="fact">AX102-1: 16-core Ryzen 9 7950X3D, 128 GB, €257.30/month + €129 setup</span><a class="cite" href="#src-hetzner-price-2026"></a><a class="cite" href="#src-hetzner-ax"></a></li>
+        <li><span class="ev" data-ev="fact">~2× repricing for new orders on 15 June 2026</span><a class="cite" href="#src-hetzner-price-2026"></a></li></ul></article>
+      <article class="card" data-crumb="Capacity"><h3>Capacity per AX42</h3><p><span class="ev" data-ev="assumption">64 GB − 8 GB host reserve = 56 GB → 14 sandboxes at 4 GiB</span>, RAM-bound (CPU overcommitted 2:1 on 16 threads). <span class="ev" data-ev="fact">Firecracker's own overhead &lt;5 MiB/VM</span><a class="cite" href="#src-firecracker"></a> is negligible. <span class="ev" data-ev="assumption">Minimum fleet = 2 boxes for redundancy.</span></p></article>
+    </div>
+  </section>
+
+  <!-- 06 ============================================================ -->
+  <section class="region" id="costs" data-title="Costs" data-size="l">
+    <h2>Costs: monthly cost vs sandbox-hours</h2>
+    <figure class="chart" id="cost-vs-hours">
+      <script type="application/json">
+      { "type": "line", "bind": "series",
+        "x": { "key": "hours", "label": "Sandbox-hours per month", "format": "compact" },
+        "y": { "format": "currency", "max": 10000 },
+        "series": [ { "key": "e2bPro", "name": "E2B Pro", "short": "E2B Pro" },
+                    { "key": "modal", "name": "Modal Starter", "short": "Modal" },
+                    { "key": "selfHw", "name": "Self-host, hardware only", "short": "Self-host HW" },
+                    { "key": "selfAll", "name": "Self-host, all-in", "short": "Self-host all-in", "ev": "estimate" } ],
+        "markers": [ { "bind": "breakEven", "label": "Break-even {x}" }, { "bind": "params.hours", "label": "You" } ] }
+      </script>
+      <figcaption>Hardware alone is cheap; your time makes self-hosting a flat <span class="ev" data-ev="estimate"><span data-out="cost.selfAll" data-format="currency">$4,897</span>/month</span>, which E2B Pro only passes at <span class="ev" data-ev="estimate"><span data-out="breakEven" data-format="int" data-suffix=" h" data-empty="beyond 500,000 h">32,150 h</span></span>.</figcaption>
+    </figure>
+    <div class="lod1">
+      <dl class="tiles">
+        <div><dt>E2B</dt><dd class="ev" data-ev="estimate">$0.1656/h</dd></div>
+        <div><dt>Modal</dt><dd class="ev" data-ev="estimate">$0.2380/h</dd></div>
+        <div><dt>Self-host, 2 boxes</dt><dd class="ev" data-ev="estimate">$230/mo</dd></div>
+      </dl>
+    </div>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="Rates"><h3>Rates (sourced)</h3><div class="table-wrap"><table class="compare"><tbody>
+        <tr><td>E2B vCPU</td><td class="ev" data-ev="fact">$0.000014/vCPU-s ($0.0504/h)<a class="cite" href="#src-e2b-price-calc"></a></td></tr>
+        <tr><td>E2B RAM</td><td class="ev" data-ev="fact">$0.0000045/GiB-s ($0.0162/h)<a class="cite" href="#src-e2b-price-calc"></a></td></tr>
+        <tr><td>E2B Pro plan</td><td class="ev" data-ev="fact">$150/month<a class="cite" href="#src-e2b-pricing"></a></td></tr>
+        <tr><td>Modal CPU</td><td class="ev" data-ev="fact">$0.00003942/physical-core-s (1 core = 2 vCPU)<a class="cite" href="#src-modal-pricing"></a></td></tr>
+        <tr><td>Modal RAM</td><td class="ev" data-ev="fact">$0.00000667/GiB-s<a class="cite" href="#src-modal-pricing"></a></td></tr>
+        <tr><td>Modal Starter / Team</td><td class="ev" data-ev="fact">$0 / $250 per month<a class="cite" href="#src-modal-pricing"></a></td></tr>
+        <tr><td>Hetzner AX42-1</td><td class="ev" data-ev="fact">€97.30/month + €49 setup<a class="cite" href="#src-hetzner-price-2026"></a><a class="cite" href="#src-hetzner-ax"></a></td></tr>
+        <tr><td>Hetzner AX102-1</td><td class="ev" data-ev="fact">€257.30/month + €129 setup<a class="cite" href="#src-hetzner-price-2026"></a><a class="cite" href="#src-hetzner-ax"></a></td></tr>
+        <tr><td>EUR→USD</td><td class="ev" data-ev="assumption">1.16</td></tr></tbody></table></div></article>
+      <article class="card" data-crumb="Derived hourly cost"><h3>Derived hourly cost</h3>
+        <p>Reference sandbox: <span class="ev" data-ev="assumption">2 vCPU / 4 GiB</span> (<span class="ev" data-ev="fact">E2B default is 2 vCPU / 0.5 GiB</span><a class="cite" href="#src-e2b-price-calc"></a>; 4 GiB matches the comparison in <a class="cite" href="#src-bex-150"></a>).</p>
+        <p class="formula">E2B   = 2×0.0504 + 4×0.0162 = <span class="ev" data-ev="estimate">$0.1656/h</span> (matches <a class="cite" href="#src-bex-150"></a>)</p>
+        <p class="formula">Modal = 1 core×0.141912 + 4×0.024012 = <span class="ev" data-ev="estimate">$0.2380/h</span></p>
+        <p class="formula">Self-host: fixed cost, ~$0 marginal until the box is full.</p>
+        <p class="formula">2 boxes = 2 × (97.30 + 49/24) × 1.16 = <span class="ev" data-ev="estimate">$230.47/month</span></p></article>
+      <article class="card" data-crumb="Chart data"><h3>Chart data (USD/month)</h3><div class="table-wrap"><table class="compare"><thead><tr><th class="num">h/month</th><th class="num">E2B Pro</th><th class="num">Modal</th><th class="num">HW only</th><th class="num">All-in</th></tr></thead><tbody>
+        <tr><td class="num">500</td><td class="num ev" data-ev="estimate">233</td><td class="num ev" data-ev="estimate">119</td><td class="num ev" data-ev="estimate">230</td><td class="num ev" data-ev="estimate">4,897</td></tr>
+        <tr><td class="num">2,000</td><td class="num ev" data-ev="estimate">481</td><td class="num ev" data-ev="estimate">476</td><td class="num ev" data-ev="estimate">230</td><td class="num ev" data-ev="estimate">4,897</td></tr>
+        <tr><td class="num">5,000</td><td class="num ev" data-ev="estimate">978</td><td class="num ev" data-ev="estimate">1,190</td><td class="num ev" data-ev="estimate">230</td><td class="num ev" data-ev="estimate">4,897</td></tr>
+        <tr><td class="num">10,000</td><td class="num ev" data-ev="estimate">1,806</td><td class="num ev" data-ev="estimate">2,380</td><td class="num ev" data-ev="estimate">230</td><td class="num ev" data-ev="estimate">4,897</td></tr>
+        <tr><td class="num">20,000</td><td class="num ev" data-ev="estimate">3,462</td><td class="num ev" data-ev="estimate">4,759</td><td class="num ev" data-ev="estimate">461</td><td class="num ev" data-ev="estimate">5,128</td></tr>
+        <tr><td class="num">32,150</td><td class="num ev" data-ev="estimate">5,474</td><td class="num ev" data-ev="estimate">7,650</td><td class="num ev" data-ev="estimate">807</td><td class="num ev" data-ev="estimate">5,473</td></tr></tbody></table></div>
+        <p class="small">At the report's defaults. Self-host all-in adds <span class="ev" data-ev="assumption">20 ops-h/month at $100/h</span> and a <span class="ev" data-ev="assumption">4 eng-month build over 24 months</span>; <span class="ev" data-ev="assumption">peak concurrency = 2× average</span>, so 20,000 h needs 4 boxes and 32,150 h needs 7.</p></article>
+    </div>
+  </section>
+
+  <!-- 07 ============================================================ -->
+  <section class="region" id="break-even" data-title="Break-even">
+    <h2>Break-even ladder: self-host vs E2B Pro</h2>
+    <figure class="chart" id="break-even-ladder">
+      <script type="application/json">
+      { "type": "range",
+        "x": { "log": true, "min": 100, "max": 100000, "format": "int", "suffix": " h", "label": "Break-even, sandbox-hours per month (log scale)" },
+        "rows": [ { "label": "Hardware only", "value": 490, "note": "~490 h", "ev": "estimate", "color": "var(--s4)" },
+                  { "label": "+ 20 ops-h/month", "value": 13260, "note": "~13,260 h", "ev": "estimate", "color": "var(--s4)" },
+                  { "label": "+ 4 eng-month build", "value": 32150, "note": "~32,150 h", "ev": "estimate", "color": "var(--s4)" },
+                  { "label": "+ 12 eng-month build", "value": 69230, "note": "~69,230 h", "ev": "estimate", "color": "var(--s4)" } ],
+        "marker": { "bind": "modalCross", "label": "Modal = E2B Pro" } }
+      </script>
+      <figcaption>Each labor line you add moves break-even right by an order of magnitude (at the report's defaults).</figcaption>
+    </figure>
+    <div class="lod1"><p><span class="ev" data-ev="estimate">Modal beats E2B Pro below ~2,070 h/month.</span></p></div>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="Scenarios"><h3>Scenarios</h3><div class="table-wrap"><table class="compare"><thead><tr><th>Self-host scenario</th><th class="num">h/month</th><th class="num">24/7 boxes</th></tr></thead><tbody>
+        <tr><td>Hardware only</td><td class="num ev" data-ev="estimate">~490</td><td class="num ev" data-ev="estimate">0.7</td></tr>
+        <tr><td>+ 20 ops-h/month, no build</td><td class="num ev" data-ev="estimate">~13,260</td><td class="num ev" data-ev="estimate">18</td></tr>
+        <tr><td>+ 4 eng-month build (24 mo)</td><td class="num ev" data-ev="estimate">~32,150</td><td class="num ev" data-ev="estimate">44</td></tr>
+        <tr><td>+ 12 eng-month build</td><td class="num ev" data-ev="estimate">~69,230</td><td class="num ev" data-ev="estimate">95</td></tr></tbody></table></div></article>
+      <article class="card" data-crumb="How it's computed"><h3>How it's computed</h3>
+        <p class="formula">BE = smallest H where 150 + H×0.1656 ≥ self-host(H), re-sizing the fleet each step</p>
+        <p class="formula">hosts = max(2, ⌈H/730 × <span class="ev" data-ev="assumption">2</span> / <span class="ev" data-ev="assumption">14</span>⌉)</p>
+        <p>The 69,230 h case is <span class="ev" data-ev="estimate">95 sandboxes 24/7</span>, near <span class="ev" data-ev="fact">E2B Pro's 100-concurrent cap</span><a class="cite" href="#src-e2b-pricing"></a>.</p></article>
+      <article class="card" data-crumb="Modal vs E2B"><h3>Modal vs E2B</h3>
+        <p class="formula">150 / (0.2380 − 0.1656) ≈ <span class="ev" data-ev="estimate">2,070 h/month</span></p>
+        <p>Below that, <span class="ev" data-ev="estimate">Modal Starter is cheaper than E2B Pro</span>; above it, E2B's lower rate pays back its fee.</p></article>
+    </div>
+  </section>
+
+  <!-- 08 ============================================================ -->
+  <section class="region cloud" id="dispute-a" data-title="Dispute A: break-even" data-mark="A">
+    <h2>Dispute A: when does self-hosting pay off?</h2>
+    <dl class="lod1 tags">
+      <dt>Side 1</dt><dd><span class="ev" data-ev="fact">~400 h/month</span><a class="cite" href="#src-bex-150"></a>, hardware math</dd>
+      <dt>Side 2</dt><dd><span class="ev" data-ev="fact">labor dominates</span><a class="cite" href="#src-bex-easy5"></a><a class="cite" href="#src-pandastack-build"></a></dd>
+      <dt>Resolved</dt><dd><span class="ev" data-ev="interpretation">both right, different cost lines</span> → <span class="ev" data-ev="estimate">13k–32k h/month</span></dd>
+    </dl>
+    <div class="lod2 reconcile">
+      <div class="claim card" data-crumb="Side 1"><h4>Side 1: hardware</h4><p><span class="ev" data-ev="fact">~400 sandbox-hours/month (“roughly one default sandbox running half the day”) on a ~€64 AX52 vs E2B</span><a class="cite" href="#src-bex-150"></a>; <span class="ev" data-ev="fact">a companion post puts break-even near two dozen runs a day, using an 8-vCPU/16-GB Hetzner cloud box at ~$19/month and ~$0 marginal cost</span><a class="cite" href="#src-bex-parity"></a>.</p></div>
+      <div class="claim card" data-crumb="Side 2"><h4>Side 2: labor</h4><p>Ops labor is <span class="ev" data-ev="fact">“the dominant line below a few thousand sandbox-hours a month”</span><a class="cite" href="#src-bex-easy5"></a>; building a production platform is <span class="ev" data-ev="fact">“comfortably 12–18 engineer-months”</span><a class="cite" href="#src-pandastack-build"></a> (the author sells a sandbox product: conflict of interest).</p></div>
+      <div class="verdict card" data-crumb="Reconciliation A"><h4>Both are right about different cost lines</h4><ol>
+        <li>Side 1's prices predate <span class="ev" data-ev="fact">the 15 June 2026 repricing</span><a class="cite" href="#src-hetzner-price-2026"></a>: <span class="ev" data-ev="fact">the $19 cloud box is now €69.49</span><a class="cite" href="#src-hetzner-price-2026"></a> and <span class="ev" data-ev="fact">Hetzner Cloud lacks documented KVM</span><a class="cite" href="#src-ellis-nokvm"></a>. With 2 × AX42: <span class="formula">(230.47 − 150) / 0.1656 ≈ <span class="ev" data-ev="estimate">486 h/month</span></span> The hardware conclusion survives.</li>
+        <li>Side 1 prices labor at zero. Add <span class="ev" data-ev="assumption">20 h/month at $100/h</span>: <span class="formula">(2,230.47 − 150) / 0.1656 ≈ <span class="ev" data-ev="estimate">12,560 h</span> → with fleet sizing <span class="ev" data-ev="estimate">≈ 13,260 h/month</span></span></li>
+        <li><span class="ev" data-ev="interpretation">For a 2-person team, labor is not a rounding error; it is the scarcest input.</span> Self-hosting pays only above <span class="ev" data-ev="estimate">~13k–32k h/month, i.e. an E2B bill of ~$2.3k–5.5k/month</span>.</li></ol></div>
+    </div>
+  </section>
+
+  <!-- 09 ============================================================ -->
+  <section class="region cloud" id="dispute-b" data-title="Dispute B: cold starts" data-mark="B">
+    <h2>Dispute B: how fast is a cold start?</h2>
+    <figure class="chart" id="cold-starts">
+      <script type="application/json">
+      { "type": "range",
+        "x": { "log": true, "min": 10, "max": 3000, "format": "int", "suffix": " ms", "label": "Create → first command, ms (log scale)" },
+        "rows": [ { "label": "Firecracker claim", "value": 125, "shape": "diamond", "note": "<125 ms claimed", "color": "var(--s6)" },
+                  { "label": "E2B, quoted", "value": 150, "shape": "diamond", "note": "~150 ms quoted", "color": "var(--s6)" },
+                  { "label": "E2B, Lizard", "ranges": [[264, 603]], "note": "median 264, p95 603", "color": "var(--s1)" },
+                  { "label": "E2B, LogRocket", "value": 717, "note": "717 ms", "color": "var(--s1)" },
+                  { "label": "Modal, Lizard", "ranges": [[929, 1422]], "note": "median 929, p95 1,422", "color": "var(--s2)" },
+                  { "label": "Modal, LogRocket", "value": 2437, "note": "2,437 ms", "color": "var(--s2)" },
+                  { "label": "Self-host, cold boot", "value": 1100, "note": "~1.1 s", "color": "var(--s3)" },
+                  { "label": "Self-host, snapshot", "value": 28, "note": "~28 ms", "color": "var(--s3)" } ],
+        "band": { "from": 300, "to": 700, "label": "budget 0.3–0.7 s" } }
+      </script>
+      <figcaption>Claims (diamonds) sit below every measurement: they time different things.</figcaption>
+    </figure>
+    <dl class="lod1 tags">
+      <dt>Claim</dt><dd><span class="ev" data-ev="fact">&lt;125 ms</span><a class="cite" href="#src-firecracker"></a> · <span class="ev" data-ev="fact">~150 ms</span><a class="cite" href="#src-softwareseni"></a></dd>
+      <dt>Measured</dt><dd><span class="ev" data-ev="fact">264 ms</span><a class="cite" href="#src-lizard-bench"></a> – <span class="ev" data-ev="fact">717 ms</span><a class="cite" href="#src-logrocket"></a> (E2B)</dd>
+      <dt>Resolved</dt><dd>budget <span class="ev" data-ev="estimate">0.3–0.7 s</span>; <span class="ev" data-ev="interpretation">cold start doesn't decide this</span></dd>
+    </dl>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="Claims vs measurements"><h3>Claims vs measurements</h3>
+        <p><strong>Claims:</strong> <span class="ev" data-ev="fact">Firecracker boots “in &lt;125ms”</span><a class="cite" href="#src-firecracker"></a>; <span class="ev" data-ev="fact">E2B is commonly quoted at ~150 ms</span><a class="cite" href="#src-softwareseni"></a>.</p>
+        <div class="table-wrap"><table class="compare"><thead><tr><th>Source (create → first command)</th><th>E2B</th><th>Modal</th></tr></thead><tbody>
+          <tr><td>Lizard, 12 Oct 2026, US East, 300 runs each (competing vendor)<a class="cite" href="#src-lizard-bench"></a></td><td class="ev" data-ev="fact">median 264 ms, p95 603 ms</td><td class="ev" data-ev="fact">median 929 ms, p95 1,422 ms</td></tr>
+          <tr><td>LogRocket, 4 Aug 2026, includes resume tests<a class="cite" href="#src-logrocket"></a></td><td class="ev" data-ev="fact">717 ms create</td><td class="ev" data-ev="fact">2,437 ms create</td></tr>
+          <tr><td>ForgeVM self-hosted Firecracker, Mar 2026, Ryzen 7 / 32 GB<a class="cite" href="#src-forgevm"></a></td><td class="ev" data-ev="fact" colspan="2">cold boot ~1.1 s; snapshot restore ~28 ms</td></tr>
+        </tbody></table></div></article>
+      <article class="card" data-crumb="Reconciliation B"><h3>Reconciliation</h3>
+        <p><span class="ev" data-ev="fact">“&lt;125 ms” is VMM-to-guest boot on AWS's tuned path</span><a class="cite" href="#src-firecracker"></a>; <span class="ev" data-ev="interpretation">benchmarks time API call → network → scheduling → first exec, so they must be higher.</span> <span class="ev" data-ev="interpretation">The 2.7× gap between the two E2B measurements (717 / 264) is unexplained: region, client location, method.</span></p>
+        <p class="formula">budget = [264 ms<a class="cite" href="#src-lizard-bench"></a>, 717 ms<a class="cite" href="#src-logrocket"></a>] → <span class="ev" data-ev="estimate">~0.3–0.7 s</span> E2B create-to-first-command</p>
+        <p>Self-host only beats it with a snapshot-restore warm pool (<span class="ev" data-ev="fact">~28 ms restore</span><a class="cite" href="#src-forgevm"></a>), which is <span class="ev" data-ev="fact">one of the 12–18 eng-months items</span><a class="cite" href="#src-pandastack-build"></a>. <span class="ev" data-ev="interpretation">Cold start does not decide this question.</span></p></article>
+    </div>
+  </section>
+
+  <!-- 10 ============================================================ -->
+  <section class="region" id="calculator" data-title="Calculator" data-size="l">
+    <h2>Decision calculator</h2>
+    <div class="lod1">
+      <dl class="tiles">
+        <div data-highlight="cheapest=e2bPro"><dt>E2B Pro</dt><dd class="ev" data-ev="estimate" data-out="cost.e2bPro" data-format="currency">$481</dd></div>
+        <div data-highlight="cheapest=modal"><dt>Modal</dt><dd class="ev" data-ev="estimate" data-out="cost.modal" data-format="currency">$476</dd></div>
+        <div data-highlight="cheapest=selfAll"><dt>Self-host all-in</dt><dd class="ev" data-ev="estimate" data-out="cost.selfAll" data-format="currency">$4,897</dd></div>
+      </dl>
+      <p>at <span class="ev" data-ev="assumption" data-param-value="hours">2,000 h</span> sandbox-hours/month · break-even <span class="ev" data-ev="estimate" data-out="breakEven" data-format="int" data-suffix=" h" data-empty="beyond 500,000 h">32,150 h</span>. <span class="hint canvas-only">Zoom in to change the inputs.</span></p>
+    </div>
+    <div class="lod2 cards" data-cols="2">
+      <article class="card" data-crumb="Inputs"><h3>Inputs <span class="ev" data-ev="assumption">(assumptions)</span></h3>
+        <div data-controls="hours peak opsHours rate buildMonths amort vcpu gib fx"></div>
+      </article>
+      <article class="card" data-crumb="Outputs"><h3>Outputs <span class="ev" data-ev="estimate">(estimates)</span></h3>
+        <dl class="outs">
+          <div data-highlight="cheapest=e2bPro"><dt>E2B Pro</dt><dd data-out="cost.e2bPro" data-format="currency">$481</dd></div>
+          <div data-highlight="cheapest=modal"><dt>Modal Starter</dt><dd data-out="cost.modal" data-format="currency">$476</dd></div>
+          <div><dt>Self-host, hardware only</dt><dd data-out="cost.selfHw" data-format="currency">$230</dd></div>
+          <div data-highlight="cheapest=selfAll"><dt>Self-host, all-in</dt><dd data-out="cost.selfAll" data-format="currency">$4,897</dd></div>
+          <div><dt>Cheapest</dt><dd data-out="cheapestName">Modal Starter</dd></div>
+          <div><dt>Break-even, all-in</dt><dd data-out="breakEven" data-format="int" data-suffix=" h" data-empty="beyond 500,000 h">32,150 h</dd></div>
+          <div><dt>Break-even, hardware only</dt><dd data-out="breakEvenHw" data-format="int" data-suffix=" h" data-empty="beyond 500,000 h">490 h</dd></div>
+          <div><dt>AX42 hosts needed</dt><dd><span data-out="hosts" data-format="int">2</span> (<span data-out="perBox" data-format="int">14</span> per box)</dd></div>
+        </dl>
+        <p class="small" data-show-if="hobbyFits">E2B Hobby: peak <span data-out="peakConc" data-format="number" data-digits="1">5.5</span> concurrent fits its 20-sandbox cap, so it is usable only if sessions stay under 1 h<a class="cite" href="#src-e2b-pricing"></a>.</p>
+        <p class="small" data-show-if="!hobbyFits" hidden>E2B Hobby is ruled out: peak <span data-out="peakConc" data-format="int">5</span> concurrent exceeds its 20-sandbox cap<a class="cite" href="#src-e2b-pricing"></a>.</p>
+        <ul class="warnings" data-out="warnings" data-show-if="warnings" hidden></ul>
+      </article>
+      <article class="card" data-crumb="Derivation"><h3>Derivation</h3>
+        <figure class="chart" id="calc-chart">
+          <script type="application/json">
+          { "type": "line", "bind": "series", "height": 260, "table": false,
+            "x": { "key": "hours", "format": "compact" },
+            "y": { "format": "currency", "max": 10000 },
+            "series": [ { "key": "e2bPro", "name": "E2B Pro", "short": "E2B" },
+                        { "key": "modal", "name": "Modal Starter", "short": "Modal" },
+                        { "key": "selfHw", "name": "Self-host, hardware only", "short": "HW" },
+                        { "key": "selfAll", "name": "Self-host, all-in", "short": "All-in", "ev": "estimate" } ],
+            "markers": [ { "bind": "params.hours", "label": "You: {x}" } ] }
+          </script>
+        </figure>
+      </article>
+      <article class="card" data-crumb="Worked numbers"><h3>Worked numbers</h3>
+<pre class="formula">e2bRate   = <span data-param-value="vcpu" data-format="int">2</span>×0.0504 + <span data-param-value="gib" data-format="int">4</span>×0.0162 = <span data-out="e2bRate" data-format="currency" data-digits="4">$0.1656</span>/h
+E2B Pro   = 150 + <span data-param-value="hours" data-format="int">2,000</span>×e2bRate = <span data-out="cost.e2bPro" data-format="currency">$481</span>
+modalRate = (vCPU÷2)×0.141912 + GiB×0.024012 = <span data-out="modalRate" data-format="currency" data-digits="4">$0.238</span>/h
+Modal     = <span data-param-value="hours" data-format="int">2,000</span>×modalRate = <span data-out="cost.modal" data-format="currency">$476</span>
+peak      = hours/730 × <span data-param-value="peak" data-format="number">2</span> = <span data-out="peakConc" data-format="number" data-digits="1">5.5</span> concurrent
+perBox    = ⌊(64 − <span data-param-value="hostReserveGb" data-format="int">8</span>) / GiB⌋ = <span data-out="perBox" data-format="int">14</span> → hosts = <span data-out="hosts" data-format="int">2</span>
+hardware  = hosts × (97.30 + 49/<span data-param-value="amort" data-format="int">24</span>) × <span data-param-value="fx" data-format="number" data-digits="2">1.16</span> = <span data-out="parts.hardware" data-format="currency">$230</span>
+ops       = <span data-param-value="opsHours" data-format="int">20</span> × <span data-param-value="rate" data-format="currency">$100</span> = <span data-out="parts.ops" data-format="currency">$2,000</span>
+build     = <span data-param-value="buildMonths" data-format="int">4</span> × 160 × rate / amort = <span data-out="parts.build" data-format="currency">$2,667</span>
+all-in    = <span data-out="cost.selfAll" data-format="currency">$4,897</span></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- 11 ============================================================ -->
+  <section class="region" id="trade-offs" data-title="Trade-offs" data-size="l">
+    <h2>Trade-off comparison</h2>
+    <div class="lod1 columns">
+      <div><h3>E2B</h3><p>Firecracker microVM<a class="cite" href="#src-northflank"></a> · <span class="ev" data-ev="estimate">$150 + $0.166/h</span> · pause not billed<a class="cite" href="#src-e2b-price-calc"></a></p></div>
+      <div><h3>Modal</h3><p>gVisor<a class="cite" href="#src-modal-sandboxes"></a> · <span class="ev" data-ev="estimate">$0.238/h, no fee</span> · GPUs <span class="ev" data-ev="interpretation">(core business)</span></p></div>
+      <div><h3>Self-host</h3><p><span class="ev" data-ev="estimate">~$230/month</span> + your time · <span class="ev" data-ev="fact">12–18 eng-months</span><a class="cite" href="#src-pandastack-build"></a> · <span class="ev" data-ev="interpretation">you own the pager</span></p></div>
+    </div>
+    <div class="lod2">
+      <div class="card" data-crumb="Comparison table">
+        <div class="table-wrap"><table class="compare">
+          <thead><tr><th>Criterion</th><th>E2B</th><th>Modal</th><th>Self-host Firecracker on Hetzner</th></tr></thead>
+          <tbody>
+            <tr><th>Isolation</th><td><span class="ev" data-ev="fact">Firecracker microVM</span><a class="cite" href="#src-northflank"></a></td><td><span class="ev" data-ev="fact">gVisor (VM optional)</span><a class="cite" href="#src-modal-sandboxes"></a></td><td><span class="ev" data-ev="fact">Firecracker microVM, if you maintain jailer/seccomp</span><a class="cite" href="#src-firecracker"></a><a class="cite" href="#src-pandastack-build"></a></td></tr>
+            <tr><th>Cost at low volume</th><td><span class="ev" data-ev="estimate">$150 fee + $0.166/h</span></td><td class="best"><span class="ev" data-ev="estimate">$0.238/h, no fee</span></td><td><span class="ev" data-ev="estimate">~$230/month hardware + your time</span></td></tr>
+            <tr><th>Cost at high volume</th><td><span class="ev" data-ev="estimate">linear</span></td><td><span class="ev" data-ev="estimate">linear, ~44% higher rate</span></td><td><span class="ev" data-ev="estimate">flat until box fills</span></td></tr>
+            <tr><th>Idle time</th><td class="good"><span class="ev" data-ev="fact">pause = not billed</span><a class="cite" href="#src-e2b-price-calc"></a></td><td class="bad"><span class="ev" data-ev="fact">billed while running</span><a class="cite" href="#src-modal-pricing"></a></td><td>free (sunk)</td></tr>
+            <tr><th>Session limit</th><td><span class="ev" data-ev="fact">24 h (Pro)</span><a class="cite" href="#src-e2b-pricing"></a></td><td><span class="ev" data-ev="fact">24 h max</span><a class="cite" href="#src-modal-sandboxes"></a></td><td class="good">none</td></tr>
+            <tr><th>Concurrency</th><td><span class="ev" data-ev="fact">100 (Pro)</span><a class="cite" href="#src-e2b-pricing"></a></td><td><span class="ev" data-ev="fact">100 containers (Starter)</span><a class="cite" href="#src-modal-pricing"></a></td><td><span class="ev" data-ev="assumption">14 per AX42</span></td></tr>
+            <tr><th>Time to first sandbox</th><td class="good">minutes</td><td class="good">minutes</td><td class="bad"><span class="ev" data-ev="fact">12–18 eng-months to production</span><a class="cite" href="#src-pandastack-build"></a></td></tr>
+            <tr><th>Lock-in</th><td>SDK + template format</td><td>Python SDK</td><td>none; <span class="ev" data-ev="interpretation">but you own the pager</span></td></tr>
+            <tr><th>GPU</th><td class="bad"><span class="ev" data-ev="fact">not offered</span><a class="cite" href="#src-bex-150"></a></td><td class="good"><span class="ev" data-ev="interpretation">yes (Modal's core business)</span></td><td class="bad"><span class="ev" data-ev="fact">AX boxes have none</span><a class="cite" href="#src-hetzner-ax"></a></td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 ============================================================ -->
+  <section class="region" id="recommendation" data-title="Recommendation">
+    <h2>Recommendation <span class="stamp">AI judgement</span></h2>
+    <ol class="lod1 findings">
+      <li><span class="ev" data-ev="interpretation">Now:</span> E2B Pro, or Modal Starter under ~2,000 h/month.</li>
+      <li><span class="ev" data-ev="interpretation">Keep the exit open:</span> thin sandbox interface.</li>
+      <li><span class="ev" data-ev="interpretation">Re-evaluate</span> at <span class="ev" data-ev="estimate">~$5k/month</span>, the 100-concurrent cap, or BYOC demand.</li>
+      <li><span class="ev" data-ev="interpretation">If you self-host later:</span> AX dedicated, budget all 8 components.</li>
+    </ol>
+    <ol class="lod2 recs cards">
+      <li class="card" data-priority="high" data-crumb="Now"><strong>Now.</strong> <span class="ev" data-ev="interpretation">E2B Pro (or Modal Starter while under ~2,000 h/month and if 24-hour sessions / no-pause are fine). Choose E2B if you need pause/resume or microVM isolation for untrusted user code; Modal if you also need GPUs.</span></li>
+      <li class="card" data-priority="high" data-crumb="Keep the exit open"><strong>Keep the exit open.</strong> <span class="ev" data-ev="interpretation">Wrap sandbox calls behind a thin interface (create / exec / files / pause / kill) so a switch costs days, not months.</span></li>
+      <li class="card" data-priority="medium" data-crumb="Re-evaluate when"><strong>Re-evaluate when</strong> sandbox spend passes <span class="ev" data-ev="estimate">~$5k/month for 3 consecutive months</span>, you hit <span class="ev" data-ev="fact">E2B Pro's 100-concurrent cap</span><a class="cite" href="#src-e2b-pricing"></a>, or a customer requires data residency / BYOC (<span class="ev" data-ev="fact">E2B Enterprise starts at $3,000/month</span><a class="cite" href="#src-e2b-pricing"></a>).</li>
+      <li class="card" data-priority="low" data-crumb="If you self-host later"><strong>If you do self-host later:</strong> <span class="ev" data-ev="fact">dedicated AX servers, not Hetzner Cloud</span><a class="cite" href="#src-ellis-nokvm"></a>; <span class="ev" data-ev="fact">budget the 8 components, not just Firecracker</span><a class="cite" href="#src-bex-easy5"></a>.</li>
+    </ol>
+  </section>
+
+  <!-- 13 ============================================================ -->
+  <section class="region" id="risks" data-title="Risks &amp; unknowns">
+    <h2>Risks &amp; unknowns</h2>
+    <ul class="lod1 findings">
+      <li>Prices move fast<a class="cite" href="#src-hetzner-price-2026"></a><a class="cite" href="#src-bex-hetzner-hikes"></a>.</li>
+      <li>Concurrency caps may decide first<a class="cite" href="#src-e2b-pricing"></a><a class="cite" href="#src-modal-pricing"></a>.</li>
+      <li>Build-effort figures are vendor-sourced<a class="cite" href="#src-pandastack-build"></a>.</li>
+      <li>Idle-heavy agents cost up to 6×<a class="cite" href="#src-bex-150"></a>.</li>
+    </ul>
+    <ul class="lod2 risks cards">
+      <li class="card" data-level="high" data-crumb="Prices"><strong>Prices move fast:</strong> <span class="ev" data-ev="fact">Hetzner raised twice in 2026</span><a class="cite" href="#src-hetzner-price-2026"></a><a class="cite" href="#src-bex-hetzner-hikes"></a>; <span class="ev" data-ev="interpretation">vendor rates may also change</span>.</li>
+      <li class="card" data-level="medium" data-crumb="Concurrency caps"><strong>Concurrency limits, not price, may force the decision first</strong> (<span class="ev" data-ev="fact">E2B Pro 100; Modal Starter 100</span><a class="cite" href="#src-e2b-pricing"></a><a class="cite" href="#src-modal-pricing"></a>).</li>
+      <li class="card" data-level="medium" data-crumb="Evidence quality"><strong>Build-effort figures come from a vendor with a conflict of interest</strong><a class="cite" href="#src-pandastack-build"></a>; <span class="ev" data-ev="interpretation">no neutral estimate found</span>.</li>
+      <li class="card" data-level="medium" data-crumb="Idle-heavy agents"><strong>Idle-heavy agents:</strong> billed hours depend on pausing aggressively; a sandbox that <span class="ev" data-ev="fact">“computes 10 minutes of each hour but lives the full hour costs 6×”</span><a class="cite" href="#src-bex-150"></a>.</li>
+      <li class="card" data-level="unknown" data-crumb="Nested virt"><strong>Hetzner Cloud nested virtualization:</strong> <span class="ev" data-ev="assumption">status is undocumented</span>.</li>
+    </ul>
+  </section>
+
+  <!-- 14 ============================================================ -->
+  <section class="region" id="next-steps" data-title="Next steps">
+    <h2>Next steps</h2>
+    <ol class="lod1 findings">
+      <li>Measure 2 weeks of real usage.</li>
+      <li>Calculator + $5k/month alert.</li>
+      <li>Build the interface wrapper.</li>
+      <li>Prototype only past break-even.</li>
+    </ol>
+    <div class="lod2 cards">
+      <article class="card" data-crumb="Steps 1–2"><h3>Steps 1–2</h3><ol class="next">
+        <li><strong>Instrument</strong> real sandbox-hours/month and peak concurrency for 2 weeks.</li>
+        <li><strong>Put those into the calculator</strong> (<a href="#calculator">region 10</a>); set the $5k/month re-evaluation alert.</li></ol></article>
+      <article class="card" data-crumb="Steps 3–4"><h3>Steps 3–4</h3><ol class="next" start="3">
+        <li><strong>Build the sandbox interface wrapper</strong> (create / exec / files / pause / kill).</li>
+        <li><strong>Only if numbers cross break-even:</strong> prototype a single-host Firecracker + jailer + snapshot-restore pool on one AX42 to test <span class="ev" data-ev="fact">the 28 ms claim</span><a class="cite" href="#src-forgevm"></a>.</li></ol></article>
+    </div>
+  </section>
+
+  <!-- 15 ============================================================ -->
+  <section class="region" id="sources" data-title="Sources" data-span>
+    <h2>Sources: parts list</h2>
+    <div class="lod2">
+      <ol class="sources">
+        <li id="src-e2b-price-calc"><a href="https://docs.e2b.dev/faq/calculate-sandbox-price">E2B Docs — How do I calculate the price of a sandbox?</a>, accessed 2026-10-18.</li>
+        <li id="src-e2b-pricing"><a href="https://e2b.dev/pricing">E2B — Pricing</a>, accessed 2026-10-18.</li>
+        <li id="src-modal-pricing"><a href="https://modal.com/pricing">Modal — Pricing</a>, accessed 2026-10-18.</li>
+        <li id="src-modal-sandboxes"><a href="https://modal.com/docs/guide/sandboxes">Modal Docs — Sandboxes</a>, accessed 2026-10-18.</li>
+        <li id="src-hetzner-price-2026"><a href="https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/">Hetzner Docs — Price Adjustment (15 June 2026)</a>, accessed 2026-10-18.</li>
+        <li id="src-hetzner-ax"><a href="https://www.hetzner.com/dedicated-rootserver/matrix-ax/">Hetzner — AX dedicated server matrix</a>, accessed 2026-10-18.</li>
+        <li id="src-bex-hetzner-hikes"><a href="https://bex.co/blog/2026/10/14/hetzner-2026-price-hikes-traffic-trap">bex.co — Hetzner's 2026 Price Hikes and the Traffic Trap (2026-10-14)</a>, accessed 2026-10-18.</li>
+        <li id="src-firecracker"><a href="https://firecracker-microvm.github.io/">Firecracker — project site (Agache et al., NSDI ’20)</a>, accessed 2026-10-18.</li>
+        <li id="src-lizard-bench"><a href="https://lizard.build/blog/e2b-vs-daytona-vs-modal">Lizard — E2B vs Daytona vs Modal benchmarks (2026-10-12; competing vendor)</a>, accessed 2026-10-18.</li>
+        <li id="src-bex-parity"><a href="https://bex.co/blog/2026/09/09/e2b-daytona-modal-sandbox-pricing-self-hosted">bex.co — Sandbox Price Parity Is Real, but It Isn't the Whole Bill (2026-09-09)</a>, accessed 2026-10-18.</li>
+        <li id="src-bex-150"><a href="https://bex.co/blog/2026/09/10/e2b-firecracker-sandbox-pricing-vs-owning-fleet">bex.co — E2B's $150/Month Sandbox Meter vs a $70 Hetzner Box (2026-09-10)</a>, accessed 2026-10-18.</li>
+        <li id="src-bex-easy5"><a href="https://bex.co/blog/2026/09/13/e2b-self-hosted-agent-sandbox-beyond-firecracker">bex.co — Firecracker Is the Easy 5% (2026-09-13)</a>, accessed 2026-10-18.</li>
+        <li id="src-forgevm"><a href="https://dev.to/adwitiya/how-i-built-sandboxes-that-boot-in-28ms-using-firecracker-snapshots-i0k">ForgeVM / DEV — Sandboxes that boot in 28ms using Firecracker snapshots (2026-03-16)</a>, accessed 2026-10-18.</li>
+        <li id="src-pandastack-build"><a href="https://www.pandastack.ai/blog/build-vs-buy-firecracker-sandbox/">PandaStack — Build vs Buy a Firecracker Sandbox Platform (vendor)</a>, accessed 2026-10-18.</li>
+        <li id="src-pandastack-metal"><a href="https://www.pandastack.ai/blog/best-bare-metal-providers-for-firecracker-2026/">PandaStack — Best Bare Metal Providers for Firecracker (2026)</a>, accessed 2026-10-18.</li>
+        <li id="src-ellis-nokvm"><a href="https://blog.alexellis.io/how-to-run-firecracker-without-kvm-on-regular-cloud-vms/">Alex Ellis — How to run Firecracker without KVM on regular cloud VMs (2025-02-12)</a>, accessed 2026-10-18.</li>
+        <li id="src-northflank"><a href="https://northflank.com/blog/e2b-vs-modal">Northflank — E2B vs Modal (2026)</a>, accessed 2026-10-18.</li>
+        <li id="src-commons-photo"><a href="https://commons.wikimedia.org/wiki/File:Hetzner_DCP_Luftbild.jpg">Wikimedia Commons — Hetzner DCP Luftbild.jpg (Hetzner Online GmbH, CC BY-SA 4.0)</a>, accessed 2026-10-18.</li>
+        <li id="src-softwareseni"><a href="https://www.softwareseni.com/e2b-daytona-modal-and-sprites-dev-choosing-the-right-ai-agent-sandbox-platform/">SoftwareSeni — E2B, Daytona, Modal, and Sprites.dev (secondary, ~150 ms claim)</a>, accessed 2026-10-18.</li>
+        <li id="src-logrocket"><a href="https://blog.logrocket.com/comparing-ai-agent-sandbox-platforms-e2b-modal-daytona-and-more/">LogRocket — Comparing AI agent sandbox platforms (2026-08-04)</a>, accessed 2026-10-18.</li>
+      </ol>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

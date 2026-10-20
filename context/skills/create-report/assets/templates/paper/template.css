@@ -1,0 +1,425 @@
+/* Paper template: a LaTeX working paper. Evidence is encoded by typography only:
+   roman + [n] = sourced, italic = estimate, small caps = assumption,
+   [interpretation: …] sans = the author's judgement. Italic, small caps and sans-serif are
+   therefore reserved for evidence and used for nothing else.
+   One colour (the hyperref link blue) for links, cross-references, focus and state. */
+
+/* Computer Modern (CTAN cm-unicode, SIL OFL 1.1), subset and renamed: see fonts/OFL.txt */
+@font-face{font-family:"Paper Serif";src:url(fonts/paper-serif-regular.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Paper Serif";src:url(fonts/paper-serif-italic.woff2) format("woff2");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Paper Serif";src:url(fonts/paper-serif-bold.woff2) format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Paper Serif";src:url(fonts/paper-serif-bolditalic.woff2) format("woff2");font-weight:700;font-style:italic;font-display:swap}
+@font-face{font-family:"Paper Sans";src:url(fonts/paper-sans-regular.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Paper Mono";src:url(fonts/paper-mono-regular.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+/* metric-sensible fallbacks: Computer Modern sets wider than Times / Helvetica */
+@font-face{font-family:"Paper Serif Fallback";src:local("Times New Roman"),local("Times"),local("Liberation Serif");size-adjust:104%}
+@font-face{font-family:"Paper Sans Fallback";src:local("Helvetica Neue"),local("Arial"),local("Liberation Sans");size-adjust:96%}
+
+:root{
+  color-scheme:light dark;
+  --font:"Paper Serif","Paper Serif Fallback","STIX Two Text","Times New Roman",serif;
+  --font-sans:"Paper Sans","Paper Sans Fallback",Helvetica,Arial,sans-serif;
+  --font-mono:"Paper Mono",ui-monospace,Menlo,Consolas,monospace;
+  /* LaTeX article ratios on the body size (\small .9, \footnotesize .8, \large 1.2, \Large 1.44, \LARGE 1.728) */
+  --fs-title:1.728rem; --fs-sec:1.44rem; --fs-sub:1.2rem; --fs-small:.9rem; --fs-foot:.8rem;
+  --bg:oklch(.925 .005 80);                       /* the desk */
+  --sheet:oklch(1 0 0);                           /* the page */
+  --ink:oklch(.18 .005 260); --ink-2:oklch(.34 .005 260); --ink-3:oklch(.48 .006 260);
+  --rule:oklch(.86 .004 260);                     /* hairlines; booktabs rules use --ink */
+  --fill:oklch(.965 .003 260);
+  --accent:oklch(.45 .15 262); --accent-ink:oklch(1 0 0); --accent-tint:oklch(.93 .035 262);
+  /* monochrome series: dash patterns tell lines apart (see the chart rules below) */
+  --s1:var(--ink); --s2:var(--ink-2); --s3:var(--ink-3); --s4:oklch(.62 .005 260); --s5:oklch(.72 .005 260); --s6:oklch(.8 .004 260);
+  --band:oklch(.93 .004 260);
+  --marker:var(--accent); --marker-ink:var(--accent-ink);
+  --good:var(--ink); --warn:oklch(.5 .17 28); --bad:oklch(.5 .17 28);
+  --head-bg:oklch(1 0 0 / .96);
+  --sheet-shadow:0 1px 3px oklch(0 0 0 / .08),0 10px 40px oklch(0 0 0 / .06);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --rh:46px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:oklch(.165 .005 260); --sheet:oklch(.22 .006 260);
+    --ink:oklch(.93 .004 260); --ink-2:oklch(.84 .004 260); --ink-3:oklch(.72 .005 260);
+    --rule:oklch(.4 .006 260); --fill:oklch(.27 .006 260); --band:oklch(.3 .006 260);
+    --s4:oklch(.6 .005 260); --s5:oklch(.5 .005 260); --s6:oklch(.42 .005 260);
+    --accent:oklch(.79 .1 262); --accent-ink:oklch(.18 .005 260); --accent-tint:oklch(.36 .07 262);
+    --warn:oklch(.76 .13 28); --bad:oklch(.76 .13 28);
+    --head-bg:oklch(.22 .006 260 / .96); --sheet-shadow:none;
+  }
+  .photo img{filter:brightness(.92)}
+}
+
+*{box-sizing:border-box}
+html{background:var(--bg);-webkit-text-size-adjust:100%;font-size:118.75%}
+body{margin:0;font-family:var(--font);color:var(--ink);font-size:1rem;line-height:1.45;font-kerning:normal;font-variant-ligatures:common-ligatures;font-synthesis:none}
+a{color:var(--accent);text-underline-offset:.18em;text-decoration-thickness:1px}
+::selection{background:var(--accent-tint);color:var(--ink)}
+input,select{caret-color:var(--accent);accent-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main:focus{outline:none}
+[tabindex="-1"]:focus{outline:none}
+[tabindex="-1"]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.skip{position:absolute;left:-999px}
+.skip:focus{left:8px;top:8px;z-index:50;background:var(--sheet);padding:6px}
+code{font-family:var(--font-mono);font-size:.95em}
+kbd{font-family:var(--font-mono);font-size:.85em;border:1px solid var(--rule);border-radius:3px;padding:0 .3em;background:var(--fill)}
+sub,sup{font-size:.7em}
+
+/* ---------- evidence typography (core .ev[data-ev]) ---------- */
+.ev[data-ev]{text-decoration:none}
+.ev[data-ev~="estimate"]{font-style:italic}
+.ev[data-ev~="assumption"]{font-variant-caps:all-small-caps;font-style:normal;letter-spacing:.04em}
+.ev[data-ev~="interpretation"]{hyphens:manual;-webkit-hyphens:manual;font-family:var(--font-sans);font-size:.9em;font-style:normal;font-variant-caps:normal;letter-spacing:0;color:var(--ink)}
+.ev[data-ev~="interpretation"][data-ev~="estimate"]{font-style:italic}
+span.ev[data-ev~="interpretation"]::before,p.ev[data-ev~="interpretation"]::before,li.ev[data-ev~="interpretation"]::before{content:"[interpretation: "}
+span.ev[data-ev~="interpretation"]::after,p.ev[data-ev~="interpretation"]::after,li.ev[data-ev~="interpretation"]::after{content:"]"}
+div.ev[data-ev~="interpretation"]>:first-child::before{content:"[interpretation: "}
+div.ev[data-ev~="interpretation"]>:last-child::after{content:"]"}
+div.ev[data-ev~="interpretation"]>*{margin:0}
+.ev[data-ev~="interpretation"] .ev[data-ev~="estimate"]{font-family:var(--font);font-size:1.11em}
+.ev[data-ev~="interpretation"] .ev[data-ev~="interpretation"]::before,.ev[data-ev~="interpretation"] .ev[data-ev~="interpretation"]::after{content:none}
+/* estimate notes: a footnote-like mark and note */
+.ev-note-btn{font:400 .62em/1 var(--font);vertical-align:super;margin-left:.08em;padding:0 .15em;border:0;background:none;color:var(--accent);cursor:pointer;font-style:normal}
+.ev-note-btn:hover{text-decoration:underline}
+.ev-note{display:block;margin:.3em 0 .5em;padding:.2em 0 .2em .8em;border-left:1px solid var(--ink-3);background:none;font:400 var(--fs-foot)/1.4 var(--font);font-style:normal;font-variant-caps:normal;letter-spacing:0;color:var(--ink-2);text-align:left}
+/* the notation paragraph (generated from [data-ev-legend]) */
+[data-ev-legend]{display:block;font:inherit;color:inherit}
+.notation{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:8px 0;margin-top:12px;font-size:.9em;line-height:1.45}
+.notation p{margin:0 0 6px;text-align:left}
+.notation p:last-child{margin-bottom:0}
+.ev-key{display:inline}
+.ev-key-mark{display:none}
+.ev-key+.ev-key::before{content:" · "}
+
+/* ---------- citations: core a.cite, grouped into LaTeX numeric [3, 8] ---------- */
+a.cite{text-decoration:none}
+a.cite:hover{text-decoration:underline}
+.cite-g{white-space:nowrap}
+.cite-g::before{content:"["}
+.cite-g::after{content:"]"}
+.cite-g a.cite::before,.cite-g a.cite::after{content:none}
+.cite-g.chg-i{text-decoration:underline 2px var(--accent);text-underline-offset:3px;animation:pp-ci-out .7s ease-in 2.2s forwards}
+@keyframes pp-ci-out{to{text-decoration-color:transparent}}
+/* hyperref cross-references */
+a.xref{text-decoration:underline;text-decoration-color:color-mix(in oklch,var(--accent) 40%,transparent);text-decoration-thickness:1px;text-underline-offset:.2em}
+a.xref:hover{text-decoration-color:var(--accent)}
+a.xref[data-opens]::after{content:" (" attr(data-opens) ")";font-size:.8em;color:var(--ink-3)}
+
+/* ---------- running head ---------- */
+.runhead{position:sticky;top:0;z-index:30;background:var(--head-bg);border-bottom:1px solid var(--ink);backdrop-filter:blur(4px)}
+.rh-inner{max-width:820px;margin:0 auto;height:var(--rh);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 28px;font-size:var(--fs-foot)}
+.rh-where{margin:0;min-width:0;display:flex;gap:14px;align-items:baseline;white-space:nowrap;overflow:hidden}
+.rh-paper{color:var(--ink-3)}
+.rh-sec{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.rh-toc{display:none}
+.rh-level{display:flex;align-items:baseline;gap:2px;flex:none;position:relative}
+.rh-ind{position:absolute;left:0;bottom:0;height:2px;width:var(--w,0);background:var(--accent);transform:translateX(var(--x,0));transition:transform .22s var(--ease-out),width .22s var(--ease-out)}
+.rh-lab{color:var(--ink-3);margin-right:6px}
+.rh-level button{font:inherit;background:none;border:0;border-bottom:2px solid transparent;padding:6px 7px 4px;cursor:pointer;color:var(--ink-2);min-height:36px}
+.rh-level button:hover{border-bottom-color:var(--rule)}
+.rh-level button[aria-checked="true"]{font-weight:700;color:var(--ink);border-bottom-color:transparent}
+.rh-level .abbr{display:none}
+
+/* ---------- the page ---------- */
+.paper{display:block;max-width:820px;margin:0 auto 60px;background:var(--sheet);padding:56px 72px 48px;box-shadow:var(--sheet-shadow)}
+.paper [id]{scroll-margin-top:calc(var(--rh) + 12px)}
+.paper p,.paper li{hyphens:auto;-webkit-hyphens:auto}
+.paper .sec>p,.paper .appendix>p,.tldr>p,ol.findings>li,ol.recs>li,ul.risks>li,ol.next>li{text-align:justify}
+.paper p,.paper li,.paper figcaption{text-wrap:pretty}
+h1,h2,h3,.subtitle{text-wrap:balance}
+.titleblock{text-align:center;margin-bottom:28px}
+.titleblock p,.titleblock h1{hyphens:manual!important}
+.titleblock h1{font-size:var(--fs-title);line-height:1.2;font-weight:400;margin:0 auto 12px;max-width:22em}
+.subtitle{font-size:var(--fs-sub);line-height:1.3;margin:0 auto 18px;max-width:28em}
+.authors{margin:0;font-size:1rem}
+.nw{white-space:nowrap}
+.affil{margin:2px 0 10px;font-size:var(--fs-foot);color:var(--ink-3)}
+details.meta{display:inline-block;text-align:left;font-size:var(--fs-foot)}
+details.meta summary{cursor:pointer;color:var(--ink-3);text-align:center}
+.meta-panel dl{display:grid;grid-template-columns:max-content 1fr;gap:2px 12px;margin:8px 0 0;padding:10px 14px;border:1px solid var(--rule)}
+.meta-panel dt{font-weight:700}
+.meta-panel dd{margin:0}
+
+/* abstract = the TL;DR */
+.tldr{margin:0 auto 1.5rem;max-width:35em;font-size:var(--fs-small)}
+.paper .tldr>h2{font-size:1em;text-align:center;margin:0 0 6px;font-weight:700;display:block}
+.tldr>p{margin:0 0 10px}
+
+.sec,.appendix{margin-top:2.5rem}
+.paper h2{font-size:var(--fs-sec);font-weight:700;margin:0 0 .75rem;line-height:1.2}
+.paper h3{font-size:var(--fs-sub);font-weight:700;margin:1.75rem 0 .5rem;line-height:1.25}
+.paper h4{font-size:1rem;font-weight:700;margin:1.25rem 0 .25rem}
+.sn{display:inline-block;min-width:1.6em;margin-right:.5em}
+h2>.sn{min-width:1.2em;margin-right:.6em}
+.sec p,.appendix p{margin:0}
+.sec>p+p:not(.ni),.appendix>p+p:not(.ni){text-indent:1.5em}
+.sec>p.ni,.appendix>p.ni{text-indent:0}
+.paper ol,.paper ul{padding-left:1.6em;margin:.5rem 0 .75rem}
+.paper li{margin-bottom:.5rem}
+.appx-note,.paper .note{font-size:var(--fs-small);color:var(--ink-2);margin-top:6px!important}
+.colophon{margin-top:2.5rem;border-top:1px solid var(--rule);padding-top:.5rem;font-size:var(--fs-foot);color:var(--ink-3);text-align:center}
+.colophon p{margin:0}
+.nojs-note{font-size:var(--fs-small);color:var(--ink-2);border:1px dashed var(--rule);padding:.5rem .75rem;margin:0 0 .5rem}
+
+/* ---------- contents (\tableofcontents), generated ---------- */
+.toc{max-width:35em;margin:0 auto 2rem;font-size:var(--fs-small)}
+.toc .toc-h{display:block;font-size:1em;margin:0 0 .25rem}
+.toc-note{margin:0 0 .75rem;font-size:.9em;color:var(--ink-3);text-wrap:pretty}
+.toc ol{list-style:none;margin:0;padding:0}
+.toc li{margin:0}
+.toc-s{padding-bottom:.25rem}
+.toc a{display:flex;align-items:baseline;gap:.35em;color:var(--ink);text-decoration:none;padding:.05em 0}
+.toc-s>a{font-weight:700}
+.toc .sn{flex:none;min-width:1.5em;margin:0}
+.toc-ss a{padding-left:1.5em}
+.toc-ss .sn{min-width:2.1em}
+.toc .ld{flex:1 1 1em;align-self:baseline;border-bottom:1px dotted var(--ink-3);min-width:1em;transform:translateY(-.25em)}
+.toc-s>a .ld{border-bottom-color:transparent}
+.toc .lv{flex:none;font-weight:400;font-size:.9em;color:var(--ink-2)}
+.toc a:hover .tt{text-decoration:underline;text-underline-offset:.18em}
+.toc li.off>a .lv{color:var(--ink-3)}
+
+/* ---------- floats: figures, plates, tables, equations ---------- */
+.paper figure{margin:1.5rem 0}
+.paper figcaption,.tcap{font-size:var(--fs-small);line-height:1.4;margin-top:8px;text-align:left;color:var(--ink)}
+.fl{font-weight:700;margin-right:.05em}
+.photo img{display:block;width:100%;height:auto;border:1px solid var(--ink);border-radius:0}
+.photo .credit{display:inline;font-size:1em;color:var(--ink)}
+.rc-zoom-btn{border-radius:0;background:oklch(0 0 0 / .55)}
+figure.tbl>figcaption,.tblfig>.tcap{margin:0 0 6px}
+.tnote{font-size:var(--fs-foot);color:var(--ink-2);margin-top:6px}
+.table-wrap,.rc-table-wrap{overflow-x:auto;scrollbar-color:var(--rule) transparent;scrollbar-width:thin;margin:0}
+/* booktabs: \toprule, \midrule, \bottomrule; no vertical rules, no fills */
+.paper table.booktabs,.paper table.compare,.rc-data{border-collapse:collapse;width:100%;font-size:var(--fs-small);line-height:1.35;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+.paper table.booktabs thead th,.paper table.compare thead th,.rc-data thead th{border-bottom:1px solid var(--ink);font-weight:700;text-align:left;padding:6px 8px;vertical-align:bottom}
+.paper table.booktabs td,.paper table.booktabs tbody th,.paper table.compare td,.paper table.compare tbody th,.rc-data td,.rc-data tbody th{padding:5px 8px;vertical-align:top;text-align:left;border:0}
+.paper table tbody th{font-weight:400}
+.paper table :is(td,th):is(.num,.r){text-align:right!important;font-variant-numeric:tabular-nums lining-nums}
+.paper table tr.total td,.paper table tr.total th{border-top:1px solid var(--ink);font-weight:700}
+.paper table.compare td.good::before,.paper table.compare td.mid::before,.paper table.compare td.bad::before{color:var(--ink)}
+.paper table.compare td.best{background:none;font-weight:700}
+
+/* equations: centred, number at the right margin */
+.eqn{display:grid;grid-template-columns:3em minmax(0,1fr) 3em;align-items:last baseline;margin:1rem 0;font-size:1rem}
+.eqb{grid-column:2;display:block;text-align:center;line-height:2.2}
+.eqno{grid-column:3;text-align:right}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .15em;line-height:1.3}
+.frac>span:first-child{border-bottom:1px solid var(--ink);padding:0 .25em .1em}
+.frac>span:last-child{padding:.1em .25em 0}
+.eqb .frac,.eqb .ev{white-space:nowrap}
+
+/* ---------- charts (core): line drawing on paper ---------- */
+.paper figure.chart{margin:1.5rem 0}
+.rc-svg{font:13.5px/1 var(--font)}
+.rc-svg text{fill:var(--ink)}
+.rc-tick line{stroke:var(--ink);stroke-dasharray:5 100000}  /* line charts: tick marks only, no grid */
+.rc-svg:not(:has(.rc-hit)) .rc-tick line{stroke:var(--ink-3);stroke-dasharray:1 3}  /* range charts: dotted guides */
+.rc-axis{stroke:var(--ink);stroke-width:.8}
+.pp-frame{fill:none;stroke:var(--ink);stroke-width:.8;pointer-events:none}
+.rc-axis-label{font-size:13px;fill:var(--ink)!important}
+.rc-end{font-weight:400;font-size:13px}
+.rc-end{fill:var(--ink)!important}
+/* lines without an explicit dash get one by order, so monochrome series stay apart */
+.rc-line:not([stroke-dasharray]):nth-of-type(2){stroke-dasharray:7 4}
+.rc-line:not([stroke-dasharray]):nth-of-type(3){stroke-dasharray:2 3}
+.rc-line:not([stroke-dasharray]):nth-of-type(4){stroke-dasharray:10 3 2 3}
+.rc-line:not([stroke-dasharray]):nth-of-type(5){stroke-dasharray:4 4}
+.rc-line:not([stroke-dasharray]):nth-of-type(6){stroke-dasharray:1 2}
+.rc-band{fill:var(--band)}
+.rc-band-label{font-style:normal;fill:var(--ink-2)!important}
+.rc-point{fill:var(--sheet);stroke:var(--accent);stroke-width:1.8}
+.rc-point-label{font-weight:400;font-style:italic;fill:var(--accent)!important}
+.rc-marker{stroke:var(--accent);stroke-width:1;stroke-dasharray:1 3}
+.rc-marker-tag rect{fill:var(--sheet);stroke:none}
+.rc-marker-tag text{fill:var(--accent)!important;font-weight:400;font-style:italic}
+.rc-xh{stroke:var(--ink-3);stroke-dasharray:1 3}
+.rc-cat{font-size:13px;fill:var(--ink)!important}
+.rc-val{font-size:12.5px}
+.rc-row{stroke:var(--rule);stroke-dasharray:1 3}
+.rc-dot{stroke:var(--ink);stroke-width:1.5}
+.rc-hollow{fill:var(--sheet)!important}
+.rc-bar{stroke:var(--ink);stroke-width:.8}
+.rc-tip{border-radius:0;border-color:var(--ink);box-shadow:none;font:13px/1.35 var(--font);background:var(--sheet)}
+.rc-tip-r i{border-radius:0;height:2px;vertical-align:4px;width:18px}
+.rc-legend-item i{border-radius:0;height:2px;width:26px;vertical-align:.3em;margin-right:.5em}
+.rc-legend{font:var(--fs-foot)/1.3 var(--font);color:var(--ink);gap:2px 16px;margin-top:6px}
+.rc-chart-data{font:var(--fs-foot) var(--font);margin-top:4px}
+.rc-chart-data summary{color:var(--ink-3)}
+.rc-data{margin-top:6px}
+
+/* ---------- box diagrams (core .boxes): a line drawing ---------- */
+.boxes{--gap:18px}
+.boxes .lanes{grid-template-columns:var(--cols,repeat(auto-fit,minmax(220px,1fr)));gap:22px;font-size:var(--fs-foot);line-height:1.3}
+.boxes .lane>h4,.boxes .lane-title{text-align:center;font:700 1em/1.3 var(--font);margin:0 0 calc(6px - var(--gap))}
+.boxes .lane-sub{text-align:center;color:var(--ink-2);font-size:.95em}
+.boxes .box{border:1px solid var(--ink);border-radius:0;padding:6px 10px;text-align:center;background:var(--sheet);font:400 1em/1.3 var(--font);color:var(--ink)}
+.boxes .box small,.boxes .box .box-sub{font-size:.88em;color:var(--ink-2);margin-top:1px}
+.boxes .box.vendor,.boxes .box.dim{border-style:dashed;color:var(--ink)}
+.boxes .box.strong{border-width:2px}
+.boxes .box.hl{border:2px solid var(--ink);background:var(--fill);box-shadow:none}
+.boxes .box.solid{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.boxes .box.solid small{color:var(--sheet);opacity:.85}
+.boxes .group{border:1.5px solid var(--ink);border-radius:0;padding:8px}
+.boxes .group>.group-title{text-align:center;font:700 1em/1.3 var(--font);color:var(--ink);margin:0 0 6px}
+.boxes .group>.items{grid-template-columns:1fr 1fr;gap:6px}
+.boxes .group .box{font-size:.95em;text-align:left;padding:4px 7px}
+.boxes .box .badge{position:static;float:right;margin:0 0 0 6px;padding:0;background:none;color:var(--ink);border-radius:0;font:700 1em/1.3 var(--font);white-space:nowrap}
+.boxes .box:has(.badge:not([hidden])){padding-right:7px}
+.boxes .lane>.box+.box::before,.boxes .lane>.group+.box::before,.boxes .lane>.box+.group::before,.boxes .lane>.group+.group::before{border-left:1px solid var(--ink-2)}
+.boxes .lane>.box+.box::after,.boxes .lane>.group+.box::after,.boxes .lane>.box+.group::after,.boxes .lane>.group+.group::after{border-top-color:var(--ink-2);border-width:3.5px;border-top-width:5px;left:calc(50% - 3.5px);top:-7px}
+[data-follow="page"]>.levels-control{display:none}
+/* the level buttons of a layered figure that keeps its own control */
+.levels-control{border:0;border-radius:0;gap:2px;font-size:var(--fs-foot)}
+.levels-control button{font:inherit;background:none;border:0;border-bottom:2px solid transparent;padding:6px 7px 4px;color:var(--ink-2);min-height:36px;border-right:0}
+.levels-control button[aria-pressed="true"]{background:none;color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+
+/* ---------- shared blocks in LaTeX dress ---------- */
+ol.findings>li>strong:first-child,ol.recs>li>strong:first-child,ul.risks>li>strong:first-child,ol.next>li>strong:first-child{font-weight:700}
+ol.recs li[data-priority]::marker,ul.risks li[data-level]::marker{font-weight:400}
+/* priority and risk level: a \marginpar-style roman note in the left margin (phone: inline "High —").
+   Roman, not italic or small caps, so it never reads as evidence. */
+ol.recs>li[data-priority],ul.risks>li[data-level]{position:relative}
+ol.recs>li[data-priority]::after,ul.risks>li[data-level]::after{position:absolute;right:calc(100% + 2.1em);top:.2em;width:5.2em;text-align:right;
+  font:400 var(--fs-foot)/1.2 var(--font);color:var(--ink-2);white-space:pre;text-indent:0}
+ol.recs>li[data-priority]::after{content:attr(data-priority) "\A priority"}
+ul.risks>li[data-level]::after{content:attr(data-level) "\A risk"}
+ul.risks>li[data-level="unknown"]::after{content:"unknown"}
+ol.recs>li[data-priority="high"]::after,ul.risks>li[data-level="high"]::after{color:var(--ink);font-weight:700}
+ol.recs li[data-priority="high"] strong,ul.risks li[data-level="high"] strong{color:inherit}
+ul.risks li[data-level="unknown"] strong{font-style:normal}
+/* reconciliation: \paragraph-style run-in heads, not cards */
+.reconcile{display:block;margin:.75rem 0}
+.reconcile .claim,.reconcile .verdict{padding:0;border:0;background:none;border-radius:0;margin:0 0 .6rem}
+.reconcile h4{display:inline;font-size:1em;margin:0 .4em 0 0}
+.reconcile h4::after{content:"."}
+.reconcile h4+p{display:inline}
+.reconcile p{margin:0;text-align:justify}
+.reconcile .claim>p+p,.reconcile .verdict>p+p{text-indent:1.5em}
+.reconcile .verdict{border-top:1px solid var(--rule);padding-top:.6rem}
+.callout{border:1px solid var(--ink);border-left-width:1px;background:none;padding:.6rem .9rem;margin:1rem 0;font-size:var(--fs-small)}
+.callout[data-kind="key"]{border-width:2px}
+.callout[data-kind="warn"]{border-color:var(--warn)}
+
+/* ---------- model tables (.calc): data-param inputs, data-out outputs ---------- */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;align-items:start}
+.calc input[type="number"],.calc input[type="text"],.calc select{font:inherit;font-size:max(16px,1em);width:6.5em;text-align:right;border:0;border-bottom:1px solid var(--ink);background:var(--fill);color:var(--ink);padding:2px 4px;font-variant-numeric:tabular-nums;min-height:32px;border-radius:0}
+.calc input[type="range"]{width:100%}
+.calc label{cursor:pointer}
+.calc input:focus-visible,.calc select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.calc input[aria-invalid],.calc input:invalid{border-bottom:2px solid var(--warn);background:color-mix(in oklch,var(--warn) 8%,var(--sheet))}
+.calc-out tr.sub td,.calc-out tr.sub th{font-size:.9em;color:var(--ink-2);padding-top:0}
+.calc-out tr.sub>:first-child{padding-left:1.4em}
+.calc-out tr.best td,.calc-out tr.best th{font-weight:700}
+.calc-notes{font-size:var(--fs-small);margin:6px 0 0!important;text-align:left!important}
+.calc-notes .warn,.calc .warn{color:var(--warn)}
+.fld-err{display:block;font-size:var(--fs-foot);color:var(--warn);line-height:1.3;margin-top:2px;text-align:right}
+.fld-err:empty{display:none}
+.calc [data-reset],.rc-reset{font:inherit;font-size:var(--fs-foot);background:none;color:var(--ink);border:1px solid var(--ink-3);border-radius:0;padding:4px 10px;cursor:pointer;min-height:32px;margin-top:6px}
+.calc [data-reset]:hover:not(:disabled){border-color:var(--ink)}
+.calc [data-reset]:disabled{opacity:.5;cursor:default}
+.rc-controls{font-size:var(--fs-small)}
+.rc-label,.rc-value{font:inherit}
+.rc-help{font-size:var(--fs-foot);color:var(--ink-2)}
+
+/* ---------- references (core ol.sources) ---------- */
+.paper ol.sources{padding-left:2.4em;font-size:var(--fs-small);margin:0;list-style:none;counter-reset:none}
+.paper ol.sources>li{position:relative;margin-bottom:5px;text-align:left;padding:1px 4px}
+.paper ol.sources>li::before{content:"[" counter(list-item) "]";position:absolute;right:100%;margin-right:.3em;white-space:nowrap}
+.sources a{word-break:break-word}
+.sources .backrefs a{display:none;font-weight:700;margin-left:.2em}
+.sources .backrefs a.on{display:inline}
+.sources li:target{background:none}
+
+/* ---------- change bar (LaTeX changebar): blocks that just appeared ---------- */
+.chg{position:relative}
+.chg::before{content:"";position:absolute;top:2px;bottom:2px;left:calc(-1 * var(--cb-x,28px));width:2px;background:var(--accent);
+  transform-origin:top;animation:pp-cb-in .24s var(--ease-out) both,pp-cb-out .7s ease-in 2.4s forwards;pointer-events:none}
+li.chg::before,td.chg::before{display:block}
+@keyframes pp-cb-in{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes pp-cb-out{to{opacity:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .rh-ind{transition:none}
+  .chg::before{animation:pp-cb-out .7s ease-in 2.6s forwards}
+  .cite-g.chg-i{animation:none}
+}
+
+/* ---------- without script: the whole text reads once, no controls that would do nothing ---------- */
+html:not(.js) [data-max],html:not(.js) .toc,html:not(.js) .levelhint{display:none}
+html:not(.js) a.cite:empty::before{content:"\00a0[ref]"}
+html:not(.js) a.cite:empty::after{content:none}
+html:not(.js) [data-ev-legend]:empty::before{content:"Notation. Italic: an estimate. Small capitals: an assumption. [interpretation: …]: the author’s judgement. [ref]: a source in the References."}
+html:not(.js) a.xref:empty::before{content:"see below"}
+html:not(.js) a.xref[href^="#tab"]:empty::before{content:"Table"}
+html:not(.js) a.xref[href^="#fig"]:empty::before{content:"Figure"}
+html:not(.js) a.xref[href^="#plate"]:empty::before{content:"Plate"}
+html:not(.js) a.xref[href^="#eq"]:empty::before{content:"Equation"}
+html:not(.js) a.xref[href^="#sec"]:empty::before{content:"Section"}
+/* numbers for the no-script reader, from CSS counters (with script, template.js writes them) */
+html:not(.js) main{counter-reset:pp-sec pp-appx pp-fig pp-tab pp-eq pp-plate}
+html:not(.js) main>section.sec:not(.refs):not(.appendix):not([data-unnumbered]){counter-increment:pp-sec;counter-reset:pp-sub}
+html:not(.js) main>section.sec:not(.refs):not(.appendix):not([data-unnumbered])>h2::before{content:counter(pp-sec);display:inline-block;min-width:1.2em;margin-right:.6em}
+html:not(.js) main>section.sec:not(.refs):not(.appendix):not([data-unnumbered]) h3::before{counter-increment:pp-sub;content:counter(pp-sec) "." counter(pp-sub);display:inline-block;min-width:1.6em;margin-right:.5em}
+html:not(.js) main>section.appendix{counter-increment:pp-appx;counter-reset:pp-sub}
+html:not(.js) main>section.appendix>h2::before{content:counter(pp-appx,upper-alpha);display:inline-block;min-width:1.2em;margin-right:.6em}
+html:not(.js) main>section.appendix h3::before{counter-increment:pp-sub;content:counter(pp-appx,upper-alpha) "." counter(pp-sub);display:inline-block;min-width:1.6em;margin-right:.5em}
+html:not(.js) main figure:not(.tbl):not(.photo):not(.nonum){counter-increment:pp-fig}
+html:not(.js) main figure:not(.tbl):not(.photo):not(.nonum)>figcaption::before{content:"Figure " counter(pp-fig) ": ";font-weight:700}
+html:not(.js) main figure.tbl:not(.nonum){counter-increment:pp-tab}
+html:not(.js) main figure.tbl:not(.nonum)>figcaption::before{content:"Table " counter(pp-tab) ": ";font-weight:700}
+html:not(.js) main figure.photo:not(.nonum){counter-increment:pp-plate}
+html:not(.js) main figure.photo:not(.nonum)>figcaption::before{content:"Plate " counter(pp-plate) ": ";font-weight:700}
+html:not(.js) main .eqn:not(.nonum){counter-increment:pp-eq}
+html:not(.js) main .eqn:not(.nonum)::after{content:"(" counter(pp-eq) ")";grid-column:3;text-align:right}
+
+/* ---------- small screens ---------- */
+@media (max-width:760px){
+  html{font-size:109.375%}
+  :root{--fs-sec:1.3rem;--fs-sub:1.12rem}
+  .rh-inner{padding:0 10px;gap:6px}
+  .rh-paper{display:none}
+  .rh-lab{font-size:.85em;margin-right:2px}
+  .rh-level .full{display:none}
+  .rh-level .abbr{display:inline}
+  .rh-level button{padding:6px 6px 4px;min-height:44px}
+  details.meta summary{padding:11px 0}
+  .toc a{padding:.3em 0}
+  .paper{padding:26px 18px 30px;box-shadow:none;margin-bottom:0}
+  .titleblock h1{font-size:1.5rem}
+  .subtitle{font-size:1.1rem}
+  .tldr{font-size:.94rem}
+  .paper .sec>p,.paper .appendix>p,.tldr>p,ol.findings>li,ol.recs>li,ul.risks>li,ol.next>li,.reconcile p{text-align:left}
+  .boxes .lanes{grid-template-columns:1fr;gap:16px}
+  .boxes .group>.items{grid-template-columns:1fr}
+  .eqn{grid-template-columns:0 minmax(0,1fr) 2.4em;font-size:.95rem}
+  .eqb{text-align:left;line-height:2;padding-left:1.2em;text-indent:-1.2em}
+  .calc-grid{grid-template-columns:1fr}
+  .calc [data-reset],.calc input,.calc select{min-height:44px}
+  .calc [data-reset]{padding:4px 14px}
+  /* comparison tables stack: one block per row, column names from data-label */
+  .paper table.compare thead{display:none}
+  .paper table.compare,.paper table.compare tbody,.paper table.compare tr,.paper table.compare td,.paper table.compare tbody th{display:block;width:100%}
+  .paper table.compare tr{border-bottom:1px solid var(--rule);padding:4px 0}
+  .paper table.compare tbody th{font-weight:700;padding:4px 0 2px}
+  .paper table.compare td{padding:1px 0 1px 5.2em;position:relative}
+  .paper table.compare td[data-label]::after{content:attr(data-label);position:absolute;left:0;top:1px;width:4.8em;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .paper ol.sources{padding-left:1.8em}
+  /* no margin on a phone: the note moves into the list marker, "1. High — …" */
+  ol.recs>li[data-priority]::after,ul.risks>li[data-level]::after{display:none}
+  ol.recs:has(>li[data-priority]),ul.risks:has(>li[data-level]){list-style-position:inside;padding-left:0}
+  ol.recs>li[data-priority="high"]::marker{content:counter(list-item) ". High — "}
+  ol.recs>li[data-priority="medium"]::marker{content:counter(list-item) ". Medium — "}
+  ol.recs>li[data-priority="low"]::marker{content:counter(list-item) ". Low — "}
+  ul.risks>li[data-level="high"]::marker{content:"High — "}
+  ul.risks>li[data-level="medium"]::marker{content:"Medium — "}
+  ul.risks>li[data-level="low"]::marker{content:"Low — "}
+  ul.risks>li[data-level="unknown"]::marker{content:"Unknown — "}
+  ol.recs>li[data-priority]::marker,ul.risks>li[data-level]::marker{color:var(--ink-2);font-size:var(--fs-small)}
+}
+@media print{
+  .runhead,.toc-note,.levelhint,.rc-chart-data,.calc [data-reset]{display:none}
+  .paper{box-shadow:none;max-width:none;padding:0}
+  html{background:none}
+}

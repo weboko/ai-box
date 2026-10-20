@@ -1,0 +1,10 @@
+{
+  "order": 5,
+  "title": "Growth Roadmap",
+  "pitch": "The decision as a schedule: a sticky time ruler with named eras and a scrubber that runs a growth model through Gantt-style swimlanes of milestones, charts and pinnable cards.",
+  "bestFor": "Answers that depend on when: growth thresholds, dated evidence, price or vendor changes, phased plans with re-evaluation gates.",
+  "weakness": "Needs a time axis to earn its place; static comparisons sit in plain reference blocks below it, and projected dates are only as good as the growth assumption behind them.",
+  "aliases": ["roadmap", "timeline", "gantt", "schedule", "growth roadmap", "time scrubber", "when does it pay off"],
+  "signals": ["dated sources or events", "a break-even or threshold reached as something grows", "a phased plan or re-evaluation gate", "a model whose outputs change month by month", "deadlines, triggers, milestones"],
+  "avoid": ["no meaningful time dimension", "a single static comparison or ranking", "an argument meant to be read top to bottom", "many unrelated parts whose structure matters more than their order"]
+}

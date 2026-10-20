@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script>   compute() returns per-step rows (e.g. timeline: [{t, …}]) and named moments -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<body>
+<!-- Roadmap template: guide in references/templates/roadmap.md, worked example in examples/roadmap/index.html.
+     Order: header → TL;DR → (simulate) → .roadmap (eras, readout, lanes) → reference blocks → sources. -->
+<a class="skip" href="#timeline">Skip to timeline</a>
+
+<header class="rm-head"><div class="rm-head-in">
+  <div class="rm-head-main">
+    <h1>{{TITLE}}</h1>
+    <p class="sub">TEMPLATE-TODO: a neutral one-line framing of the topic. As of <time data-meta="date">{{DATE}}</time>.</p>
+  </div>
+  <div class="rm-head-side">
+    <p class="rm-legend" data-ev-legend="all"></p>
+    <details class="rm-meta"><summary>Report details</summary><div class="meta-panel"></div></details>
+  </div>
+</div></header>
+
+<main>
+<!-- TL;DR: h2 sits in the label gutter. .lede = L0, next p = L1, .verdict = live answer at the cursor. -->
+<section class="tldr" id="tldr">
+  <h2>TL;DR</h2>
+  <p class="lede">TEMPLATE-TODO: the answer in one sentence.</p>
+  <p>TEMPLATE-TODO: the 2–4 points that support or qualify it, with <span class="ev" data-ev="fact">sourced claims</span><a class="cite" href="#src-example"></a> marked.</p>
+  <div class="verdict"><span class="rm-chip" data-cursor-time>now</span> TEMPLATE-TODO: what is true at the cursor, e.g. <span data-cursor-out="usage" data-format="int">–</span>.</div>
+  <details>
+    <summary>Key findings, each linked to its place on the timeline</summary>
+    <ol class="findings">
+      <li><strong>TEMPLATE-TODO: claim.</strong> Evidence. <a class="rm-onto" href="#m-first">on timeline</a></li>
+    </ol>
+  </details>
+</section>
+
+<!-- Optional, needs a model: standard core sliders for the inputs that move the timeline. data-controls lists
+     the model's param keys (Report.model params[].key). Hidden without JavaScript.
+<section class="rm-sim" aria-label="Simulation">
+  <div class="rm-sim-row"><h2>Simulate growth</h2><div data-controls="hours growth"></div></div>
+</section> -->
+
+<!-- The roadmap. data-unit month|quarter|week|year|day; data-from/to/start in units from today (negative = past);
+     data-today ISO date; data-tick = ruler tick spacing; data-page = PgUp/PgDn step; data-rows = path to the
+     model's per-step rows, data-x = their time key. -->
+<div class="roadmap" id="timeline" data-nav="Timeline"
+     data-unit="month" data-from="-6" data-to="18" data-start="0" data-tick="3" data-page="3"
+     data-today="{{DATE}}" data-scrub-label="Simulated month" data-past-label="past · dated evidence">
+  <h2>Timeline</h2>
+  <p class="rm-nojs rm-hint">TEMPLATE-TODO: one line for readers without JavaScript (the defaults this list shows).</p>
+
+  <!-- Eras: named phases on the ruler. Class = kind (past|now|watch|gate|build|phase). data-until defaults to the
+       next era's start; *-bind reads a model output, null hides the era. -->
+  <ol class="eras">
+    <li class="past" data-at="-6" data-until="0">TEMPLATE-TODO: Evidence</li>
+    <li class="now" data-at="0" data-until="3" data-short="Now">TEMPLATE-TODO: Now</li>
+    <li class="watch" data-at="3" data-short="Next">TEMPLATE-TODO: Next phase</li>
+  </ol>
+
+  <!-- Read-out in the sticky ruler (era and time are added for you). data-cursor-out = field of the row at the cursor. -->
+  <p class="rm-readout"><span>TEMPLATE-TODO: what to watch at the cursor</span></p>
+  <!-- Vertical spine (< 900px): one row per step, filled from the row. <template class="rm-step"><span data-cursor-out="usage" data-format="int"></span></template> -->
+
+  <!-- Chart lane (needs a model): a core line chart bound to data-rows; the engine aligns it to the ruler.
+  <section data-lane="usage">
+    <h3>Usage</h3><p class="lane-sub">units / month</p>
+    <figure class="chart" id="lane-usage"><script type="application/json">
+      { "type": "line", "height": 120, "series": [ { "key": "usage", "name": "Usage" } ] }
+    </script><figcaption>…</figcaption></figure>
+  </section>
+  Strip lane (category per step): <section data-lane="best" data-strip="cheapest" data-cats="a=Option A|b=Option B"><h3>…</h3></section> -->
+
+  <!-- Item lane: each li is a card. data-at (units) or data-date (ISO) = milestone; + data-until = bar
+       (data-style plan|watch|build|ops). data-ev = shape ● ▲ ■ ◆. data-label = short chip text (default: the h4).
+       data-at-bind="moments.x" moves it with the model; data-detent puts it on the playhead rail. -->
+  <section data-lane="events">
+    <h3>TEMPLATE-TODO: Lane name</h3><p class="lane-sub">TEMPLATE-TODO: what the lane holds</p>
+    <ol class="items">
+      <li id="m-first" data-date="{{DATE}}" data-ev="fact" data-label="TEMPLATE-TODO: short label">
+        <h4>TEMPLATE-TODO: card title</h4>
+        <p class="kicker">TEMPLATE-TODO: source · date</p>
+        <p>TEMPLATE-TODO: L1, the card's short paragraph (shown on hover).</p>
+        <details class="more"><summary>Detail and derivation</summary>
+          <p>TEMPLATE-TODO: L2/L3 detail, shown when the card is pinned.</p>
+        </details>
+      </li>
+      <li id="m-plan" data-at="1" data-until="4" data-style="plan" data-ev="interpretation" data-label="TEMPLATE-TODO: work item">
+        <h4>TEMPLATE-TODO: planned work</h4>
+        <p>TEMPLATE-TODO: what, who, how long.</p>
+      </li>
+      <li id="m-gate" data-at="9" data-ev="interpretation" data-label="Decision gate" data-detent="past the decision gate">
+        <h4>TEMPLATE-TODO: decision gate</h4>
+        <p>TEMPLATE-TODO: what to decide here, and on which evidence.</p>
+      </li>
+    </ol>
+  </section>
+</div>
+
+<!-- Reference blocks: anything static (tables, disagreements, recommendations, risks). h2 sits in the gutter;
+     each block gets a link in the ruler's navigation (data-nav = short label). -->
+<section class="block" id="details" data-nav="Details">
+  <h2>TEMPLATE-TODO: Reference</h2>
+  <p>TEMPLATE-TODO: content that has no place on a time axis.</p>
+</section>
+
+<section class="block" id="risks" data-nav="Risks">
+  <h2>Risks and next steps</h2>
+  <ul class="risks"><li data-level="medium"><strong>TEMPLATE-TODO: risk.</strong> Impact and mitigation.</li></ul>
+  <ol class="next"><li><strong>TEMPLATE-TODO: action.</strong> What it settles.</li></ol>
+</section>
+
+<section class="block" id="sources" data-nav="Sources">
+  <h2>Sources</h2>
+  <ol class="sources">
+    <li id="src-example"><a href="https://example.com/">TEMPLATE-TODO: Publisher — Title</a>, accessed {{DATE}}.</li>
+  </ol>
+</section>
+</main>
+</body>
+</html>

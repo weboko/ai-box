@@ -1,0 +1,33 @@
+{
+  "order": 1,
+  "title": "Longread",
+  "pitch": "A long-form magazine article: one-line ledes, evidence glyphs with margin notes, and “Go deeper” panels that open in place.",
+  "bestFor": "Arguments read top to bottom: build-vs-buy memos, technical or market assessments, explainers and comparisons where the reasoning matters as much as the answer. The default when unsure.",
+  "weakness": "Still a linear article: skimmers scroll to find things, and it relies on a good one-line lede for every section.",
+  "aliases": [
+    "longread",
+    "article",
+    "essay",
+    "memo",
+    "write-up",
+    "explainer",
+    "blog post",
+    "magazine",
+    "long form",
+    "default"
+  ],
+  "signals": [
+    "an argument with a conclusion",
+    "sections that each answer one question",
+    "heavily sourced claims",
+    "a few charts or diagrams supporting prose",
+    "a disagreement to reconcile",
+    "an optional small calculator"
+  ],
+  "avoid": [
+    "the model is the main event and every number should react (cockpit, notebook)",
+    "the answer depends on when (roadmap)",
+    "many parts whose relationships matter more than prose (blueprint)",
+    "a landscape to browse in any order (atlas)"
+  ]
+}

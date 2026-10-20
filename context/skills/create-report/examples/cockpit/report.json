@@ -1,0 +1,10 @@
+{
+  "title": "Self-host Firecracker on Hetzner, or rent E2B / Modal?",
+  "slug": "example-cockpit",
+  "date": "2026-10-18",
+  "tldr": "Rent (E2B first). Self-hosting only wins on hardware; once your own time is priced in, the break-even moves from ~500 to ~13,000–32,000 sandbox-hours a month.",
+  "tags": ["agent-sandboxes", "firecracker", "hetzner", "e2b", "modal", "build-vs-buy", "cost-model"],
+  "model": "claude-opus-5-5",
+  "agent": "Claude Code",
+  "template": "cockpit"
+}

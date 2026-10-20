@@ -1,0 +1,30 @@
+{
+  "order": 6,
+  "title": "Blueprint",
+  "pitch": "The report as one zoomable engineering drawing: zoom out for labelled regions, in for summaries, closer for full detail.",
+  "bestFor": "Research where the relationships between parts are the point (system architectures, build-vs-buy, ecosystem maps), for readers who explore rather than read top to bottom.",
+  "weakness": "Pan and zoom is slower than scrolling for linear reading, and each region needs both a summary layer and a detail layer; phone readers often switch to the list view.",
+  "aliases": [
+    "blueprint",
+    "canvas",
+    "zoomable",
+    "drawing",
+    "engineering drawing",
+    "architecture diagram",
+    "spatial",
+    "zoom"
+  ],
+  "signals": [
+    "many distinct parts whose relationships matter",
+    "an architecture or system diagram is the centrepiece",
+    "build vs buy with components and effort",
+    "8–20 sections that can stand side by side",
+    "disagreements between sources to flag in place"
+  ],
+  "avoid": [
+    "an argument meant to be read top to bottom",
+    "short reports with fewer than about 5 sections",
+    "time-driven stories (use a timeline template)",
+    "readers who will mostly be on phones"
+  ]
+}

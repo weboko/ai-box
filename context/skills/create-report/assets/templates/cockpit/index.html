@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script>   the live model: Report.model({params, compute}) -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>  only for visuals core charts and boxes can't express -->
+</head>
+<body>
+<!-- Cockpit: header → Conditions band → board of sections → tiles. Each tile shows its
+     headline; its .tab children (summary / evidence / derivation) open in the drawer.
+     Guide: references/templates/cockpit.md · shared markup: references/core.md -->
+<a class="skip" href="#main">Skip to board</a>
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand">
+      <h1>{{TITLE}}</h1>
+      <p class="subtitle">TEMPLATE-TODO one-line framing of the decision · Data as of <time data-meta="date" datetime="{{DATE}}">{{DATE}}</time>.</p>
+    </div>
+    <div class="top-aside">
+      <p class="legend" data-ev-legend="all"></p>
+      <details class="about">
+        <summary>Report metadata</summary>
+        <div class="about-b">
+          <p><span data-meta="reading-time"></span></p>
+          <div class="meta-panel"></div>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<!-- Conditions band: one slider per model param (data-keys picks and orders them; default:
+     every param without hidden: true). data-labels gives short slider labels, "|"-separated.
+     .cond-peek is the one-line summary phones see above the "Adjust" button.
+     Removed automatically when the page has no model. -->
+<section class="conditions" data-keys="TEMPLATE-TODO-key1,key2" data-labels="TEMPLATE-TODO short label 1|short label 2">
+  <h2>Conditions</h2>
+  <p class="cond-sub">your assumptions; every figure on the board is recomputed from them</p>
+  <p class="cond-peek"><b data-param-value="key1">TEMPLATE-TODO default</b> · <b data-out="TEMPLATE-TODO.path">value</b></p>
+</section>
+
+<div class="shell">
+<main id="main" class="board">
+
+<!-- A section = one rail entry. data-icon: grid chart bars boxes table split flag doc list
+     clock alert gauge map layers users check info (or a 16×16 SVG path). data-short = phone
+     tab label. data-cols="6" for a row of KPI tiles (default 4 columns). -->
+<section class="board-sec" id="overview" data-label="Overview" data-icon="grid" data-cols="6">
+  <header class="sec-h"><h2>Overview</h2></header>
+
+  <!-- TL;DR: required, first. The L0 answer + a live verdict line. -->
+  <section class="tile tldr" id="tldr" data-kind="tldr">
+    <h3>TL;DR</h3>
+    <p class="l0"><span class="ev" data-ev="interpretation">TEMPLATE-TODO the answer in one sentence (L0).</span></p>
+    <p class="verdict-line">TEMPLATE-TODO the live verdict: at <b data-param-value="key1">default</b>, <b data-out="TEMPLATE-TODO.path">value</b>.</p>
+    <div class="tab" data-tab="summary">
+      <p>TEMPLATE-TODO the short paragraph (L1): the 2–4 points that support or qualify the answer.</p>
+    </div>
+    <div class="tab" data-tab="evidence">
+      <p>TEMPLATE-TODO the sourced facts the answer rests on<a class="cite" href="#src-TEMPLATE-TODO"></a>.</p>
+    </div>
+    <div class="tab" data-tab="derivation">
+<pre class="calc"><span class="c"># TEMPLATE-TODO how the verdict line is computed</span>
+result = a × b = <b data-out="TEMPLATE-TODO.path">value</b></pre>
+    </div>
+  </section>
+
+  <!-- KPI tile: one headline number. Write the default inside data-out so it reads without JS. -->
+  <article class="tile" id="k-TEMPLATE-TODO" data-kind="kpi">
+    <h3>TEMPLATE-TODO metric</h3>
+    <p class="kpi-v"><i class="sw" style="--c: var(--s1)"></i><span class="ev" data-ev="estimate"><span data-out="TEMPLATE-TODO.path" data-format="currency">$0</span><small>/mo</small></span></p>
+    <p class="kpi-sub">TEMPLATE-TODO what it is made of</p>
+    <div class="tab" data-tab="summary"><p>TEMPLATE-TODO what this number means (L1–L2).</p></div>
+    <div class="tab" data-tab="derivation"><pre class="calc">TEMPLATE-TODO formula = <b data-out="TEMPLATE-TODO.path" data-format="currency">$0</b></pre></div>
+  </article>
+
+  <article class="tile" id="findings" data-span="full">
+    <h3>Key findings</h3>
+    <ol class="findings">
+      <li><span>TEMPLATE-TODO finding headline.</span></li>
+    </ol>
+    <div class="tab" data-tab="summary">
+      <ol class="findings">
+        <li><span><strong>TEMPLATE-TODO finding headline.</strong> Evidence<a class="cite" href="#src-TEMPLATE-TODO"></a>.</span></li>
+      </ol>
+    </div>
+  </article>
+</section>
+
+<!-- A chart tile. data-span="2" = half the board, "full" = whole row. -->
+<section class="board-sec" id="TEMPLATE-TODO-section" data-label="TEMPLATE-TODO" data-icon="chart">
+  <header class="sec-h"><h2>TEMPLATE-TODO section</h2><p>TEMPLATE-TODO one-line intro</p></header>
+  <article class="tile" id="t-TEMPLATE-TODO" data-span="full">
+    <h3>TEMPLATE-TODO chart title</h3>
+    <figure class="chart">
+      <script type="application/json">
+      { "type": "line", "bind": "TEMPLATE-TODO-series", "table": false,
+        "x": { "key": "x", "format": "compact" }, "y": { "format": "currency" },
+        "series": [ { "key": "a", "name": "TEMPLATE-TODO A" }, { "key": "b", "name": "TEMPLATE-TODO B" } ],
+        "markers": [ { "bind": "params.key1", "label": "you: {x}" } ] }
+      </script>
+      <figcaption>TEMPLATE-TODO the takeaway, not the axes.</figcaption>
+    </figure>
+    <div class="tab" data-tab="summary"><p>TEMPLATE-TODO what the chart shows (L2).</p></div>
+    <div class="tab" data-tab="evidence"><p>TEMPLATE-TODO the inputs and their sources (L3).</p></div>
+    <div class="tab" data-tab="derivation"><pre class="calc">TEMPLATE-TODO the arithmetic (L3)</pre></div>
+  </article>
+</section>
+
+<!-- Other tile bodies: table.compare, .reconcile (sides + .verdict), ol.recs, ul.risks,
+     ol.next, figure.boxes (data-levels), figure.photo, .meter[data-meter][data-max],
+     dl.ratestrip. Non-tile children of a section (e.g. ol.sources) span the full row. -->
+
+<section class="board-sec" id="sources" data-label="Sources" data-icon="doc">
+  <header class="sec-h"><h2>Sources</h2></header>
+  <ol class="sources">
+    <li id="src-TEMPLATE-TODO"><a href="https://example.com/">TEMPLATE-TODO Publisher — Title</a>, accessed {{DATE}}.</li>
+  </ol>
+</section>
+
+</main>
+</div>
+</body>
+</html>

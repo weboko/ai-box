@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="TEMPLATE-TODO one neutral sentence: what this report is about.">
+<script>document.documentElement.className += " js";</script>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script>   only if the report has a model -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<body id="top">
+<a class="skip" href="#article">Skip to article</a>
+<!-- Longread (guide: references/templates/longread.md; worked example: examples/longread/index.html).
+     The engine builds the contents, running head, § numbers, Figure numbers, evidence glyphs and
+     margin notes, and the "Go deeper" buttons. You write sections, ledes and prose. -->
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="Contents"></nav>
+
+  <main id="article" class="article">
+    <header class="masthead">
+      <h1>{{TITLE}}</h1>
+      <p class="dek">TEMPLATE-TODO dek: one neutral sentence that frames the topic.</p>
+      <p class="byline">
+        <span>TEMPLATE-TODO kicker, e.g. Infrastructure · Build vs buy · Prices as&nbsp;of <time data-meta="date" datetime="{{DATE}}">{{DATE}}</time></span>
+        <span>The <a href="#tldr">short answer</a> takes 30 seconds · <span data-meta="reading-time"></span></span>
+      </p>
+      <details class="meta">
+        <summary>About this report</summary>
+        <div class="meta-panel"></div>
+      </details>
+      <aside class="legend-head" aria-label="Evidence legend">
+        <p class="legend-title">Reading the margin</p>
+        <div data-ev-legend></div>
+      </aside>
+    </header>
+
+    <!-- Every top-level section: <section class="sec" id="short-id" data-title="Short name for the contents">,
+         an <h2> (the engine adds "§ n"), then <p class="lede"> = the section's one-line answer (L0),
+         then L1 prose. Put L2 detail in <div class="deeper" data-label="what it holds">, and L3
+         derivations in a .deeper nested inside it. -->
+
+    <section class="tldr sec" id="tldr" data-title="The short answer">
+      <h2>The short answer</h2>
+      <p class="lede">TEMPLATE-TODO the answer in one sentence (L0).</p>
+      <p>TEMPLATE-TODO the 2–4 points that support or qualify it (L1). <span class="ev" data-ev="fact">A sourced claim</span><a class="cite" href="#src-todo"></a>; <span class="ev" data-ev="estimate" data-note="How it was derived, with the arithmetic.">a derived number</span>; <span class="ev" data-ev="interpretation">your judgement.</span></p>
+    </section>
+
+    <!-- Optional: delete if the investigation has nothing for it. Only the TL;DR and Sources are required. -->
+    <section class="sec" id="findings" data-title="Findings">
+      <h2>TEMPLATE-TODO Findings</h2>
+      <p class="lede">TEMPLATE-TODO what the findings add up to, in one line.</p>
+      <!-- data-collapse-with: this short list is replaced by the full list when the panel opens -->
+      <ol class="findings" data-collapse-with="d-findings">
+        <li><strong>TEMPLATE-TODO claim one.</strong></li>
+        <li><strong>TEMPLATE-TODO claim two.</strong></li>
+      </ol>
+      <div class="deeper" id="d-findings" data-label="the evidence behind each finding">
+        <ol class="findings">
+          <li><strong>TEMPLATE-TODO claim one.</strong> TEMPLATE-TODO evidence, tagged and cited.</li>
+          <li><strong>TEMPLATE-TODO claim two.</strong> TEMPLATE-TODO evidence, tagged and cited.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="sec" id="topic" data-title="TEMPLATE-TODO short name">
+      <h2>TEMPLATE-TODO section heading</h2>
+      <p class="lede">TEMPLATE-TODO this section's answer in one line.</p>
+      <p>TEMPLATE-TODO short paragraph (L1). Refer to other sections with <a class="sec-ref" href="#tldr">the short answer</a> (the engine adds "§1").</p>
+
+      <!-- Figures: a <p class="fig-label"> first child gets "Figure n ·" and a head row.
+           Chart (core spec, references/core.md "Charts"); line charts get series toggles:
+      <figure class="chart" id="my-chart">
+        <p class="fig-label">What the chart shows (units)</p>
+        <script type="application/json">{ "type": "line", "data": [ … ], "x": { "key": "year" }, "series": [ … ] }</script>
+        <figcaption>The takeaway.</figcaption>
+      </figure>
+           Diagram with levels: <figure class="boxes" data-levels="Overview|Components|Effort"> + fig-label + .lanes
+           Photo: <figure class="photo" data-zoom><img …><figcaption>…<span class="credit">…</span></figcaption></figure>
+           Table: <div class="table-wrap"><table class="compare">…</table></div> (4+ columns reach into the margin) -->
+
+      <div class="deeper" id="d-topic" data-label="TEMPLATE-TODO what the detail holds">
+        <h3>TEMPLATE-TODO detail heading</h3>
+        <p>TEMPLATE-TODO detail (L2).</p>
+        <div class="deeper" id="d-topic-l3" data-label="the derivation">
+          <p>TEMPLATE-TODO derivation, method or raw table (L3).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Disagreement between credible sources:
+    <section class="sec" id="dispute" data-title="Dispute: …">
+      <h2>…?</h2>
+      <p class="lede">…</p>
+      <div class="reconcile">
+        <div class="claim"><h4>Side one</h4><p>…</p></div>
+        <div class="claim"><h4>Side two</h4><p>…</p></div>
+        <div class="verdict"><h4>Reconciliation</h4><ol><li><strong>Step.</strong> <span class="calc">(a − b) ÷ c ≈ <b>n</b></span></li></ol></div>
+      </div>
+    </section> -->
+
+    <!-- Calculator (only with assets/model.js). data-calculator makes assumption notes link here.
+    <section class="sec" id="calc" data-title="Run your own numbers" data-calculator>
+      <h2>Run your own numbers</h2>
+      <p class="lede">…</p>
+      <figure class="calculator">
+        <p class="fig-label">The model</p>
+        <p class="calc-sticky" aria-hidden="true"><span>… <b data-out="…">…</b></span><span class="be">…</span></p>
+        <div class="calc-grid">
+          <div class="calc-inputs" data-keys="key1,key2" data-more="key3,key4"><p class="nojs">The sliders need JavaScript; the results show the report's defaults.</p></div>
+          <div class="calc-out">
+            <p class="calc-verdict">At <b data-param-value="key1">…</b>, the best option is <b data-out="bestName">…</b>. <span class="rel">…</span></p>
+            <ul class="calc-bars" data-best="min">
+              <li data-bar="cost.a" data-s="1"><span class="name">Option A</span><b data-out="cost.a" data-format="currency">$0</b></li>
+            </ul>
+            <dl class="calc-facts"><div><dt>Label</dt><dd data-out="…">…</dd><dd>sub-line</dd></div></dl>
+            <ul class="calc-warnings" data-out="warnings"></ul>
+          </div>
+        </div>
+        <figure class="chart"><script type="application/json">{ "type": "line", "bind": "series", … , "markers": [{ "bind": "params.key1", "label": "you: {x}", "format": "int" }] }</script></figure>
+        <figcaption>…</figcaption>
+      </figure>
+    </section> -->
+
+    <!-- Optional: delete if the investigation has nothing for it (no decision to make). -->
+    <section class="sec" id="rec" data-title="Recommendation">
+      <h2>Recommendation</h2>
+      <p class="lede">TEMPLATE-TODO the recommendation in one line.</p>
+      <ol class="recs">
+        <li data-priority="high"><strong>TEMPLATE-TODO do this.</strong> TEMPLATE-TODO why, and what it depends on.</li>
+      </ol>
+    </section>
+
+    <!-- Optional: delete if the investigation has nothing for it. data-level: high | medium | low | unknown (a pill before the item). -->
+    <section class="sec" id="risks" data-title="Risks &amp; unknowns">
+      <h2>Risks &amp; unknowns</h2>
+      <p class="lede">TEMPLATE-TODO what could change the answer, in one line.</p>
+      <ul class="risks">
+        <li data-level="medium"><strong>TEMPLATE-TODO risk.</strong> TEMPLATE-TODO impact, and how to reduce it.</li>
+      </ul>
+    </section>
+
+    <!-- Optional: delete if the investigation has nothing for it. -->
+    <section class="sec" id="next" data-title="Next steps">
+      <h2>Next steps</h2>
+      <p class="lede">TEMPLATE-TODO the next move, in one line.</p>
+      <ol class="next">
+        <li><strong>TEMPLATE-TODO action.</strong> TEMPLATE-TODO what it settles.</li>
+      </ol>
+    </section>
+
+    <!-- Required. The engine puts a small vermilion end mark after the last paragraph before this section. -->
+    <section class="sec" id="sources" data-title="Sources">
+      <h2>Sources</h2>
+      <ol class="sources">
+        <li id="src-todo"><a href="https://example.com/">TEMPLATE-TODO Publisher — Title</a>, accessed {{DATE}}.</li>
+      </ol>
+    </section>
+
+    <footer class="colophon">
+      <p>Set in Longread Serif, a subset of Charis SIL (SIL Open Font License). <a href="#top">↑ Back to top</a></p>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

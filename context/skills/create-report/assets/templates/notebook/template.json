@@ -1,0 +1,27 @@
+{
+  "order": 3,
+  "title": "Notebook",
+  "pitch": "A Jupyter-style lab notebook: markdown cells argue, code cells show each number and its derivation, one params cell re-runs everything.",
+  "bestFor": "Quantitative research the reader should audit and re-run: cost models, sizing, benchmarks, forecasts.",
+  "weakness": "Reads as an engineer's artefact; prose-heavy findings, recommendations and risks get little special treatment.",
+  "aliases": [
+    "notebook",
+    "jupyter",
+    "lab notebook",
+    "ipynb",
+    "show your work",
+    "auditable"
+  ],
+  "signals": [
+    "a model with inputs the reader would change",
+    "numbers derived step by step from sourced rates",
+    "break-even or sizing arithmetic",
+    "reader wants to check the derivation"
+  ],
+  "avoid": [
+    "no quantitative model or derivations",
+    "narrative or argument for a non-technical reader",
+    "timelines and phases",
+    "many parts whose relationships matter more than numbers"
+  ]
+}

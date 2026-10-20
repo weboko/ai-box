@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script>   uncomment when the report has a model -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<body>
+<!-- Notebook template. Guide: references/templates/notebook.md. Shared markup: references/core.md.
+     Every top-level <section class="cell …"> inside <main class="notebook"> is a cell:
+       md      prose (markdown cell)          <section class="cell md" data-title="…">
+       params  generated from the model      <section class="cell params" data-title="params">
+       code    pseudo-code + output          <section class="cell code" data-title="…"><pre class="src">…</pre><div class="out">…</div></section>
+     The engine adds the top bar, In/Out prompts, counters, gutter tags and the cell index. -->
+<main class="notebook" data-file="TEMPLATE-TODO-short-name.ipynb">
+  <header class="nbhead">
+    <h1>{{TITLE}}</h1>
+    <p class="subt">TEMPLATE-TODO: a neutral one-line framing of the topic, plus "as of" for prices or versions.</p>
+    <p class="byline"><time data-meta="date">{{DATE}}</time> · <span data-meta="reading-time"></span></p>
+    <p data-ev-legend="all"></p>
+    <details class="kernel">
+      <summary>Notebook metadata · date, model, agent, tags</summary>
+      <div class="meta-panel"></div>
+      <p>kernel: TEMPLATE-TODO say where the numbers come from (e.g. assets/model.js), or delete this line.</p>
+    </details>
+  </header>
+
+  <!-- TL;DR: the first cell. Keep class="tldr …" first in the attribute. -->
+  <section class="tldr cell md" id="tldr" data-title="TL;DR">
+    <h2>TL;DR</h2>
+    <p class="lead"><strong>TEMPLATE-TODO: the answer in one sentence.</strong></p>
+    <p>TEMPLATE-TODO: the 2–4 points that support or qualify it, with <span class="ev" data-ev="estimate">an estimate</span> and a cited fact<a class="cite" href="#src-todo"></a>.</p>
+  </section>
+
+  <section class="cell md" id="findings" data-title="Key findings">
+    <h2>Key findings</h2>
+    <ol class="findings">
+      <li><strong>TEMPLATE-TODO claim.</strong> Evidence<a class="cite" href="#src-todo"></a>. Live numbers: <span data-out="TEMPLATE-TODO.path" data-format="int">default</span>.</li>
+    </ol>
+  </section>
+
+  <!-- L2 detail inside a markdown cell: <details class="more"><summary>More: …</summary>…</details> -->
+
+  <!-- The params cell: one per report, before the code cells that use the model. Its fields
+       are generated from Report.model params (label → comment, note → comment line, log → slider).
+       data-keys="a b c" picks the editable params (others print as constants). Delete without a model. -->
+  <section class="cell params" id="params" data-title="params">
+    <p>TEMPLATE-TODO: every assumption lives in this cell. Change a value and every cell below re-runs.</p>
+  </section>
+
+  <!-- A code cell. pre.src is the derivation (hidden until "show derivation"):
+         ${path} / ${path|int} / ${path|number:4} / ${params.key} are filled from the model on every run;
+         [#src-id] in the code becomes a citation. Escape < and & as &lt; &amp;.
+       .out is the output, always visible: data-out values with the default written in,
+       core charts, tables, boxes, a pre.txt line, p.note. Add class "reconcile" to a cell
+       that settles a dispute. -->
+  <section class="cell code" id="c-example" data-title="TEMPLATE-TODO step">
+    <pre class="src">total = a * b            # [#src-todo]
+      # = ${params.a} * ${params.b}
+total</pre>
+    <div class="out">
+      <pre class="txt">TEMPLATE-TODO <span data-out="total" data-format="int">0</span></pre>
+      <p class="note">TEMPLATE-TODO: one line on what the output means.</p>
+    </div>
+  </section>
+
+  <!-- Recommendation / risks / next steps are markdown cells with the shared blocks:
+       ol.recs > li[data-priority], ul.risks > li[data-level], ol.next. -->
+  <section class="cell md" id="recommendation" data-title="Recommendation">
+    <h2>Recommendation</h2>
+    <ol class="recs">
+      <li data-priority="high"><strong>TEMPLATE-TODO do X.</strong> <span class="ev" data-ev="interpretation">Why, and what it depends on.</span></li>
+    </ol>
+  </section>
+
+  <section class="cell md" id="sources" data-title="Sources" data-tags="">
+    <h2>Sources</h2>
+    <ol class="sources">
+      <li id="src-todo"><a href="https://example.org/">TEMPLATE-TODO source title</a>, accessed {{DATE}}.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

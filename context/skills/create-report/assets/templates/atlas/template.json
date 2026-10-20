@@ -1,0 +1,10 @@
+{
+  "order": 7,
+  "title": "The Atlas",
+  "pitch": "The report drawn as a map: regions become plates you open, places inside them hold the detail, and a locator inset says where you are.",
+  "bestFor": "Research with distinct areas a reader explores in any order: landscape and market surveys, architecture overviews, multi-option comparisons, where 'where does this fit relative to everything else' matters.",
+  "weakness": "The argument (findings → reconciliation → recommendation) is spread over pages, so a reader who wants one straight read follows links; the generated map shows relative weight, not real geography, and gets small on phones (numbered badges).",
+  "aliases": ["atlas", "map", "explorer", "territory", "landscape map", "drill-down map", "gazetteer"],
+  "signals": ["4–9 distinct areas with sub-parts", "parts differ in size or weight", "contested areas between options", "a survey or landscape of options", "reader explores in any order"],
+  "avoid": ["a linear argument to read top to bottom", "one or two sections only", "the answer depends mainly on time or dates", "a dashboard of live numbers is the point"]
+}

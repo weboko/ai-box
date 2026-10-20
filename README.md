@@ -90,8 +90,8 @@ publishing it through a Cloudflare tunnel:
 Set `WWW_DOMAIN` in `.env` to the tunnel's public hostname as well: agents use it to build
 links to what they publish. The `create-report` skill publishes reports to
 `~/www/<date>-<slug>/` and regenerates `~/www/index.html` as a list of them, which replaces
-Caddy's directory listing at the root. It keeps the prompts behind the reports in
-`~/reports/`, which is not served.
+Caddy's directory listing at the root. It keeps the prompts and working briefs behind the
+reports in `~/reports/`, which is not served.
 
 Everything in `~/www` is public unless you put Cloudflare Access in front of the hostname.
 One token is one tunnel, so run only one box with it: with several, Cloudflare spreads
@@ -122,8 +122,11 @@ Everything in `context/` is mounted read-only into every box and wired up to bot
 
 Skills so far:
 
-- `create-report`: turns an investigation into a themed, interactive HTML report and
-  publishes it to `~/www` (see "Web server and tunnel").
+- `create-report`: turns a finished investigation into an interactive HTML report in one of
+  seven templates (longread, paper, notebook, cockpit, roadmap, blueprint, atlas) and
+  publishes it to `~/www` (see "Web server and tunnel"). The agent picks a template and
+  says which; reply with another template's name to switch. `~/www/report-formats/` shows
+  every template rendering the same example report.
 
 Edits apply to the next session without a rebuild. A newly added skill folder is linked on
 the next start: `./box restart <service>`. The agents cannot modify these files.
