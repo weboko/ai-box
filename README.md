@@ -150,9 +150,10 @@ Skills so far:
   publishes it to `~/www` (see "Web server and tunnel"). The agent picks a template and
   says which; reply with another template's name to switch. `~/www/report-formats/` shows
   every template rendering the same example report.
-- `agent-orchestrator`: launches Claude or Codex as background runs, each in its own git
-  worktree and branch, ending in a PR and a report; schedules recurring or one-shot runs
-  through the box's cron. State lives in `~/.agent-orchestrator`; the crontab is rebuilt
+- `agent-orchestrator`: launches Claude or Codex as background runs and schedules recurring
+  or one-shot runs through the box's cron. Code tasks get a fresh worktree and end in a PR;
+  knowledge tasks keep updating one folder, either a local git repo or a GitHub repo the
+  skill can create (private by default) and push to. State lives in `~/.agent-orchestrator`; the crontab is rebuilt
   from it on every box start.
 
 Edits apply to the next session without a rebuild. A newly added skill folder is linked on

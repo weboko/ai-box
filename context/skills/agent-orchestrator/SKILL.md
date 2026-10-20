@@ -5,9 +5,19 @@ description: Orchestrate background AI coding agents (Claude Code, Codex CLI) on
 
 # Agent Orchestrator
 
-The user describes work in natural language; you turn it into a task spec and launch it. Each run gets its own git worktree on a fresh branch, the agent (`claude` or `codex`) runs there unattended in unrestricted mode, opens a PR, and writes a report. You help inspect, schedule and stop runs.
+The user describes work in natural language; you turn it into a task spec and launch it. The agent (`claude` or `codex`) runs unattended in unrestricted mode and writes a report. Code tasks get a fresh worktree and end in a PR; knowledge tasks keep building up the same folder or repo run after run. You help inspect, schedule and stop runs.
 
-Be **decisive when the user asks** — no confirmation prompts. Risk is contained by isolation (per-run worktree + branch), not by safe-mode flags. Never switch agents or retry with another one.
+Be **decisive when the user asks** — no confirmation prompts. Risk is contained by isolation (each task works only in its own worktree or workspace), not by safe-mode flags. Never switch agents or retry with another one.
+
+## Where the agent works (`mode:`)
+
+| Mode    | For                                        | Works in                                    | Delivers                                   |
+|---------|--------------------------------------------|---------------------------------------------|--------------------------------------------|
+| `pr`    | changes to an existing repo (default with `repo:`) | a fresh worktree + branch per run    | a PR per run                               |
+| `push`  | a repo the task owns, e.g. a knowledge base | a persistent clone in the workdir          | commits pushed straight to the default branch |
+| `local` | knowledge kept only on this machine (default without `repo:`) | a persistent local git repo in the workdir | local commits, no remote          |
+
+The workdir is `$AO_HOME/workspaces/<slug>` unless the spec sets `workdir:`. `push` and `local` runs see everything earlier runs left there, and one run at a time uses a workdir. With `create_repo: true`, a missing repo is created on GitHub first, private unless `visibility: public` (bare names go under `github_user`, else the `gh` login).
 
 ## Layout
 
@@ -18,12 +28,13 @@ config.json        # optional: github_user, default_org, default_agent, branch_p
 backlog/           # one-off specs waiting to run;  backlog/done/ after they ran
 scheduled/         # <slug>.md specs with cron: or run_at: — source of truth for the crontab
 reports/           # copies of agent reports: <slug>_<run-id>_<agent>.md
-repos/<owner>/<repo>/   # base clones the worktrees come from
-runs/<run-id>/     # task.md agent-task.md run.json agent.log agent.pid exit_code report.md worktree/
+repos/<owner>/<repo>/   # base clones the pr-mode worktrees come from
+workspaces/<slug>/      # persistent folders for push/local tasks (default workdir)
+runs/<run-id>/     # task.md agent-task.md run.json agent.log agent.pid exit_code report.md [worktree/]
 runs/cron.<slug>.log    # what each scheduled firing did (RUN / SKIP)
 ```
 
-Run id `YYYYMMDD-HHMMSS`. Branch `<branch_prefix>/<agent>/<slug>-<run-id>` (prefix defaults to `agent`). Template for `config.json`: `templates/config.example.json`.
+Run id `YYYYMMDD-HHMMSS`. pr-mode branch `<branch_prefix>/<agent>/<slug>-<run-id>` (prefix defaults to `agent`). Template for `config.json`: `templates/config.example.json`.
 
 ## Intent → command
 
@@ -33,6 +44,8 @@ Run id `YYYYMMDD-HHMMSS`. Branch `<branch_prefix>/<agent>/<slug>-<run-id>` (pref
 | "Save this as a backlog task" (don't run)        | Write spec to `$AO_HOME/backlog/<slug>.md`. Stop.                     |
 | "Run the backlog task about Y"                   | Pick the best match in `$AO_HOME/backlog/*.md` → `bin/run-task.sh`    |
 | "Every Monday at 9, have Claude…"                | Spec with `cron:` → `bin/schedule.sh add SPEC`                        |
+| "Every week research X, keep it in a repo"       | `mode: push`, `repo: <name>`, `create_repo: true`, `cron:` → `schedule.sh add` |
+| "…just keep the notes here" / no repo mentioned  | No `repo:` (→ `local`), `cron:` → `bin/schedule.sh add SPEC`          |
 | "Run this tomorrow at 8 AM"                      | Spec with `run_at:` → `bin/schedule.sh add SPEC`                      |
 | "Stop / resume the \<slug\> schedule"            | `bin/schedule.sh disable SLUG` / `resume SLUG` — doesn't kill runs    |
 | "Delete the \<slug\> schedule"                   | `bin/schedule.sh remove SLUG`                                         |
@@ -52,15 +65,16 @@ Fill `templates/task.md`:
 - `title` — one short sentence the user would recognize.
 - `slug` — lowercase-hyphen, ≤3 words (`fix-auth`, `review-issues`). Scheduled slugs must be unique.
 - `agent` — the user's choice, else omit (config `default_agent`, else `claude`).
-- `repo` — `owner/repo` or a GitHub URL; one repo per task.
-- Body: Goal, Background, Requirements, Done Criteria, User Notes. Keep it task-specific — worktree, branch, commit/push/PR and report rules come from `templates/agent-task-contract.md`, appended automatically. To deviate (e.g. "analysis only, no PR"), say so in Requirements; the contract defers to the task.
-- Recurring tasks: write the goal so each run stands alone ("triage issues opened since the last run").
+- `repo` — `owner/repo`, a GitHub URL, or (with `create_repo: true`) a bare name for a new repo; one repo per task. Omit for local-only tasks.
+- `mode`, `create_repo`, `visibility`, `workdir` — see the table above; omit to get the defaults. Name new knowledge repos after the topic (`ai-news-digest`), not the run.
+- Body: Goal, Background, Requirements, Done Criteria, User Notes. Keep it task-specific — workdir, branch, commit/push/PR and report rules come from `templates/contract.md` plus `templates/delivery-<mode>.md`, appended automatically. To deviate (e.g. "analysis only, no PR"), say so in Requirements; the contract defers to the task.
+- Recurring tasks: write the goal so each run stands alone ("triage issues opened since the last run"). For knowledge tasks, say how the content should be organized (one file per topic, a dated changelog…) — the agent already knows to read what's there, update in place and keep `README.md` as the index.
 
 Save one-offs anywhere (usually `$AO_HOME/backlog/<slug>.md`); `schedule.sh add` copies scheduled specs into `scheduled/`.
 
 ## Repo resolution
 
-`owner/repo` or a URL is used as-is. A bare name is looked up under config `github_user`, then `default_org`, via `gh repo view`; if neither has it, fail and ask for `owner/repo` — don't guess or search public GitHub unless asked. The base clone is created or fetched automatically; agents only ever work in the run's worktree.
+`owner/repo` or a URL is used as-is. A bare name is looked up under config `github_user`, then `default_org`, via `gh repo view`; if neither has it, fail and ask for `owner/repo` (or set `create_repo: true` if the user wants a new one) — don't guess or search public GitHub unless asked. Clones are created or fetched automatically; agents only ever work in the run's worktree or the task's workdir.
 
 ## Scheduling
 
@@ -84,7 +98,10 @@ One-shot: `run_at: "YYYY-MM-DD HH:MM"`; after it fires the spec moves to `backlo
 - Agent binary missing → name the agent and the install hint the script printed; don't switch agents.
 - Repo unresolved → list what was tried (`github_user`, `default_org`), ask for `owner/repo`.
 - Worktree creation failed → name the base repo, branch and target; no agent was started.
-- Run `failed` / no PR → leave the worktree and branch, point at `report.md` and `agent.log`. Never clean up on your own.
+- Repo creation failed → name the repo and visibility and quote the `gh` error; no agent was started.
+- "workdir … in use by run X" → a previous run of that workspace is still going; say so, don't start another.
+- "workdir … is a clone of …, not owner/repo" → the spec's `repo:`/`workdir:` changed; ask the user before touching the old folder.
+- Run `failed` / no PR / push failed → leave the worktree or workspace as is, point at `report.md` and `agent.log`. Never clean up on your own, and never delete a persistent workspace unless the user asks for exactly that.
 - Scheduled firing skipped → normal; the `SKIP` line in `runs/cron.<slug>.log` names the live run.
 
 Log reading, PR-link extraction, failure triage and manual cleanup: `references/troubleshooting.md`.

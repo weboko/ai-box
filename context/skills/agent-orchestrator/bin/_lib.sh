@@ -11,6 +11,7 @@ AO_BACKLOG="$AO_HOME/backlog"
 AO_SCHEDULED="$AO_HOME/scheduled"
 AO_REPORTS="$AO_HOME/reports"
 AO_REPOS="$AO_HOME/repos"
+AO_WORKSPACES="$AO_HOME/workspaces"
 AO_RUNS="$AO_HOME/runs"
 AO_CONFIG="$AO_HOME/config.json"
 AO_SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,7 +35,7 @@ cfg() {
 }
 
 ensureDirs() {
-  mkdir -p "$AO_BACKLOG/done" "$AO_SCHEDULED" "$AO_REPORTS" "$AO_REPOS" "$AO_RUNS"
+  mkdir -p "$AO_BACKLOG/done" "$AO_SCHEDULED" "$AO_REPORTS" "$AO_REPOS" "$AO_WORKSPACES" "$AO_RUNS"
 }
 
 # ---- agents -------------------------------------------------------------------
@@ -85,6 +86,33 @@ spec_slug() {
   printf '%s\n' "$slug"
 }
 
+# spec_mode SPEC [REPO] — pr (existing repo, worktree + PR), push (persistent clone,
+# commits to the default branch) or local (persistent local git repo, no remote).
+# Defaults to pr when there is a repo, local otherwise.
+spec_mode() {
+  local spec="$1" repo="${2:-}" mode
+  [[ -n "$repo" ]] || repo="$(fm_get repo "$spec")"
+  mode="$(fm_get mode "$spec")"
+  if [[ -z "$mode" ]]; then
+    if [[ -n "$repo" ]]; then mode=pr; else mode=local; fi
+  fi
+  case "$mode" in
+    pr|push) [[ -n "$repo" ]] || die "mode $mode needs repo: in the spec" ;;
+    local)   [[ "$(fm_get create_repo "$spec")" != true ]] \
+               || die "create_repo needs mode push or pr; local tasks have no remote" ;;
+    *)       die "invalid mode: $mode (expected pr, push or local)" ;;
+  esac
+  printf '%s\n' "$mode"
+}
+
+# Persistent folder for push/local tasks: workdir: from the spec, else workspaces/<slug>.
+spec_workdir() {
+  local dir
+  dir="$(fm_get workdir "$1")"
+  dir="${dir/#\~/$HOME}"
+  printf '%s\n' "${dir:-$AO_WORKSPACES/$2}"
+}
+
 # ---- slugs and repos ----------------------------------------------------------
 slugify() {
   # slugify "Some Title!" → "some-title"
@@ -94,29 +122,43 @@ slugify() {
     | cut -c1-60
 }
 
-# Normalize repo input → "owner/repo". Resolves URL or bare-name forms.
+# "owner/repo" from a GitHub URL (https, ssh or scp-style); other input unchanged.
+repo_from_url() {
+  printf '%s\n' "$1" | sed -E 's#^(https?://|ssh://git@|git@)github\.com[:/]##; s#\.git$##; s#/$##'
+}
+
+# resolve_repo INPUT [CREATE] [VISIBILITY] — normalize to "owner/repo". A bare name is
+# looked up under github_user, then default_org. With CREATE=1 a repo that doesn't exist
+# is created (bare names under github_user, else the gh login), private unless VISIBILITY
+# says public.
 resolve_repo() {
-  local input="$1"
+  local input="$1" create="${2:-0}" visibility="${3:-private}" repo="" owner gh_user gh_org
   case "$input" in
-    https://github.com/*|http://github.com/*)
-      printf '%s\n' "$input" | sed -E 's#^https?://github\.com/##; s#\.git$##; s#/$##'
-      return 0 ;;
-    */*)
-      printf '%s\n' "$input"
-      return 0 ;;
+    http://*|https://*|git@*|ssh://*) repo="$(repo_from_url "$input")" ;;
+    */*) repo="$input" ;;
+    *)
+      gh_user="$(cfg github_user "")"
+      gh_org="$(cfg default_org "")"
+      for owner in "$gh_user" "$gh_org"; do
+        [[ -z "$owner" ]] && continue
+        if gh repo view "$owner/$input" >/dev/null 2>&1; then repo="$owner/$input"; break; fi
+      done
+      if [[ -z "$repo" ]]; then
+        [[ "$create" == 1 ]] \
+          || die "could not resolve repo '$input'. Tried github_user='$gh_user', default_org='$gh_org'. Provide owner/repo or a URL."
+        owner="${gh_user:-$(gh api user --jq .login 2>/dev/null || true)}"
+        [[ -n "$owner" ]] || die "can't tell which GitHub user to create '$input' under; set github_user in config.json"
+        repo="$owner/$input"
+      fi
+      ;;
   esac
-  # Bare name — try configured user, then default org.
-  local gh_user gh_org
-  gh_user="$(cfg github_user "")"
-  gh_org="$(cfg default_org "")"
-  for owner in "$gh_user" "$gh_org"; do
-    [[ -z "$owner" ]] && continue
-    if gh repo view "$owner/$input" >/dev/null 2>&1; then
-      printf '%s/%s\n' "$owner" "$input"
-      return 0
-    fi
-  done
-  die "could not resolve repo '$input'. Tried github_user='$gh_user', default_org='$gh_org'. Provide owner/repo or a URL."
+  if [[ "$create" == 1 ]] && ! gh repo view "$repo" >/dev/null 2>&1; then
+    case "$visibility" in private|public) ;; *) die "visibility must be private or public, not '$visibility'" ;; esac
+    log "creating $visibility GitHub repo $repo"
+    gh repo create "$repo" "--$visibility" --add-readme >&2 \
+      || die "failed to create $visibility GitHub repo $repo"
+  fi
+  printf '%s\n' "$repo"
 }
 
 # Ensure base clone exists and is up to date. Echoes the base path.
@@ -152,27 +194,53 @@ create_worktree() {
   printf '%s\n' "$branch"
 }
 
+# ensure_workspace MODE REPO DIR — the persistent folder push/local runs work in.
+# push: a clone of REPO (cloned on first use; refuses a folder cloned from elsewhere).
+# local: a git repo with no remote. Never pulls — the agent syncs as its first step.
+ensure_workspace() {
+  local mode="$1" repo="$2" dir="$3" origin
+  if [[ "$mode" == push ]]; then
+    if [[ -d "$dir/.git" ]]; then
+      # The configured URL, not `remote get-url`, which expands insteadOf rewrites.
+      origin="$(git -C "$dir" config --get remote.origin.url || true)"
+      [[ "$(repo_from_url "$origin")" == "$repo" ]] \
+        || die "workdir $dir is a clone of '${origin:-nothing}', not $repo"
+    else
+      [[ ! -e "$dir" || -z "$(ls -A "$dir")" ]] || die "workdir $dir exists but isn't a clone of $repo"
+      mkdir -p "$(dirname "$dir")"
+      log "cloning $repo to $dir"
+      gh repo clone "$repo" "$dir" >&2
+    fi
+  else
+    mkdir -p "$dir"
+    if [[ ! -d "$dir/.git" ]]; then
+      log "creating local git repo in $dir"
+      git -C "$dir" init -q -b main >&2
+    fi
+  fi
+}
+
+# Id of a live run working in DIR, if any — two runs never share a workspace.
+workdir_busy() {
+  local dir="$1" rid
+  for rid in $(run_ids); do
+    [[ "$(jq -r '.workdir // empty' "$AO_RUNS/$rid/run.json")" == "$dir" ]] || continue
+    if [[ "$(run_status "$rid")" == running ]]; then printf '%s\n' "$rid"; return 0; fi
+  done
+}
+
 # ---- agent-task.md assembly ---------------------------------------------------
+# build_agent_task SPEC OUT MODE KEY=VALUE… — the spec, then the common contract, then the
+# delivery rules for MODE, with {{KEY}} placeholders filled in.
 build_agent_task() {
-  # build_agent_task SPEC OUT RUN_ID AGENT SLUG REPO BRANCH RUN_DIR WORKTREE
-  local spec="$1" out="$2" run_id="$3" agent="$4" slug="$5" repo="$6" branch="$7"
-  local run_dir="$8" worktree="$9"
-  local contract="$AO_TEMPLATES/agent-task-contract.md"
-  [[ -f "$contract" ]] || die "contract template missing: $contract"
-  {
-    cat "$spec"
-    echo
-    echo
-    sed \
-      -e "s|{{RUN_ID}}|$run_id|g" \
-      -e "s|{{AGENT}}|$agent|g" \
-      -e "s|{{TASK_SLUG}}|$slug|g" \
-      -e "s|{{REPO}}|$repo|g" \
-      -e "s|{{BRANCH}}|$branch|g" \
-      -e "s|{{RUN_DIR}}|$run_dir|g" \
-      -e "s|{{WORKTREE}}|$worktree|g" \
-      "$contract"
-  } > "$out"
+  local spec="$1" out="$2" mode="$3" kv
+  shift 3
+  local subst=()
+  for kv in "$@"; do subst+=(-e "s|{{${kv%%=*}}}|${kv#*=}|g"); done
+  local contract="$AO_TEMPLATES/contract.md" delivery="$AO_TEMPLATES/delivery-$mode.md"
+  [[ -f "$contract" && -f "$delivery" ]] || die "contract templates missing in $AO_TEMPLATES"
+  { cat "$spec"; printf '\n\n'; cat "$contract"; printf '\n'; cat "$delivery"; } \
+    | sed "${subst[@]}" > "$out"
 }
 
 # ---- runs ---------------------------------------------------------------------

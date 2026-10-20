@@ -62,9 +62,10 @@ case "$MODE" in
         "run_id   : \(.run_id)",
         "status   : \($s)\(if .exit_code then " (exit \(.exit_code))" else "" end)",
         "agent    : \(.agent)",
-        "repo     : \(.repo)",
+        "mode     : \(.mode)",
+        "repo     : \(if .repo == "" then "none" else .repo end)",
         "branch   : \(.branch)",
-        "worktree : \(.worktree_path)",
+        "workdir  : \(.workdir)",
         "log      : \($d)/agent.log",
         "report   : \($d)/report.md"' "$RDIR/run.json"
     fi

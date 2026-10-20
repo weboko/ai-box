@@ -41,7 +41,7 @@ grep -oE 'https://github\.com/[^ )]+/pull/[0-9]+' $R/report.md $R/agent.log | he
 In order:
 1. `$R/report.md` — the agent's own account; look at "errors or blockers".
 2. `$R/exit_code` and the tail of `$R/agent.log` — tool errors, `gh` 4xx, auth problems.
-3. `git -C $R/worktree status` / `git -C $R/worktree log --oneline -5` — what was actually committed.
+3. `W=$(jq -r .workdir $R/run.json); git -C $W status; git -C $W log --oneline -5` — what was actually committed.
 4. `$R/finalize.log` — if the run never reached `done`/`failed`.
 
 No `report.md` usually means the agent crashed or was killed before the end.
@@ -56,9 +56,17 @@ crontab -l                                  # the managed block should list the 
 
 If the block is missing (e.g. after a container rebuild), `$BIN/schedule.sh sync` rewrites it. A `SKIP … reason=previous-run-alive` line means the last run was still going — expected, not an error.
 
+## Push or local tasks: workspace problems
+
+`push` and `local` tasks reuse one folder across runs (`workdir` in `run.json`, default `$AO_HOME/workspaces/<slug>`).
+
+- **"workdir … is in use by run X"** — a previous run is still going. Wait, or kill it if the user asks.
+- **"workdir … is a clone of …, not owner/repo"** — the spec's `repo:` or `workdir:` changed. Point `workdir:` somewhere new, or ask the user what to do with the old folder.
+- **Push failed / history diverged** — the agent leaves its commit local and says so in the report. `git -C $W status` and `git -C $W log origin/HEAD..HEAD` show what's waiting. The next run starts by pulling with rebase and pushing again.
+
 ## Manual cleanup — only when the user asks
 
-Nothing is cleaned up automatically. Confirm with the user first, then:
+Nothing is cleaned up automatically. Persistent workspaces (`push`/`local`) hold the task's accumulated work: never delete one unless the user explicitly asks for that folder to go. For a `pr` run, confirm with the user first, then:
 
 ```bash
 git -C "$(jq -r .base_repo_path $R/run.json)" worktree remove --force $R/worktree
