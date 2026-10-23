@@ -6,3 +6,4 @@ codex-box/*
 ai-box/*
 !ai-box/.gitkeep
 .sessions
+.DS_Store
