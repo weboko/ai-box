@@ -155,6 +155,17 @@ Skills so far:
   knowledge tasks keep updating one folder, either a local git repo or a GitHub repo the
   skill can create (private by default) and push to. State lives in `~/.agent-orchestrator`; the crontab is rebuilt
   from it on every box start.
+- `create-dogfooding`, `perform-dogfooding`, `update-dogfooding`: dogfooding for any repo
+  (library, CLI, app, service). `create-` writes a spec of intended behavior into the repo's
+  `.dogfooding/` (or `~/.dogfooding/<owner>/<repo>/`): one Markdown file per feature, scenarios
+  with stable IDs, P0/P1/P2 priority, provenance and dependencies. `perform-` runs the scope you
+  name ("P0 only", "the deploy flow", "full"), marks scenarios behind a failure as blocked, and
+  writes a Markdown report with reproduction steps and evidence to the gitignored
+  `.dogfooding/runs/`. It offers an HTML version at the end. `update-` reconciles the spec
+  with product changes, but only after you approve its proposal; agents are told to propose
+  it whenever they change product behavior. The format and the shared helper live in
+  `create-dogfooding/` (`references/format.md`, `scripts/dogfood-context.sh`). Design:
+  `docs/dogfooding-spec.md`.
 
 Edits apply to the next session without a rebuild. A newly added skill folder is linked on
 the next start: `./box restart <service>`. The agents cannot modify these files.

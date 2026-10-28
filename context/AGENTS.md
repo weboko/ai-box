@@ -30,3 +30,9 @@ the user adds a hostname for it in Cloudflare.
 
 Research reports go through the `create-report` skill. It owns `~/www/index.html` (the list
 of reports) and rebuilds it on every publish, so don't edit that file by hand.
+
+## Dogfooding
+
+If a repo has dogfooding context (`.dogfooding/`, or `~/.dogfooding/<owner>/<repo>/`) and you
+change product behavior, check whether its scenarios still hold and propose updates with the
+`update-dogfooding` skill. Change those files only after the user agrees.
