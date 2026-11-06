@@ -9,6 +9,36 @@ The prefix is `hostname -s`; set `BOX_HOST` in `.env` to override it. Plain `doc
 still works, but names the boxes `local-*`. Existing containers pick up a new name only when
 recreated (`./box up -d --force-recreate`).
 
+## Windows (WSL2 + Docker Desktop)
+
+Run everything from a WSL shell. The commands in this README then work unchanged.
+
+1. Install WSL with Ubuntu (`wsl --install -d Ubuntu`) and Docker Desktop with the WSL 2
+   backend. In Docker Desktop, turn on Settings → Resources → WSL integration → Ubuntu, and
+   Settings → General → "Start Docker Desktop when you sign in". The boxes restart with
+   Docker (`restart: unless-stopped`), so they come back after a reboot.
+2. In the Ubuntu shell, clone with WSL's own git, into WSL's filesystem:
+   `git clone <url> ~/ai-box && cd ~/ai-box`. Do not use `/mnt/c/...`: the boxes' homes are
+   bind-mounted from the repo and need symlinks, Unix sockets and private key permissions,
+   which Windows drives don't provide. `./box` refuses to run there, and also refuses when
+   scripts have Windows (CRLF) line endings.
+3. The box name defaults to the Windows computer name (e.g. `DESKTOP-ABC123-claude`). Set
+   `BOX_HOST` in `.env` to choose another.
+
+On the WSL side, files the boxes write into `claude-box/`, `codex-box/` and `ai-box/` are
+owned by root: use `sudo` to read or delete them, or go through the box
+(`./box exec claude cat ~/...`). From Windows Explorer the repo is at
+`\\wsl$\Ubuntu\home\<you>\ai-box`.
+
+All boxes share the WSL VM, which gets half the machine's RAM by default. If `~/prime.sh`
+or large builds get killed, raise it in `%UserProfile%\.wslconfig`, then run
+`wsl --shutdown` and restart Docker Desktop:
+
+```ini
+[wsl2]
+memory=24GB
+```
+
 ## Claude
 
 | | |
@@ -119,7 +149,9 @@ added to GitHub as a *Signing Key* can sign commits but not authenticate.
    `~/.ssh/git-signing` in its home and prints the public key to `./box logs <service>`.
 3. Add that key at https://github.com/settings/ssh/new with the key type **Signing Key**.
    It is also on the host in `./<home>/.ssh/git-signing.pub` (`claude-box`, `codex-box`,
-   `ai-box`), or use `gh ssh-key add <file> --type signing` (needs the
+   `ai-box`; on Linux and WSL that directory is root-only, so `sudo cat` it or run
+   `./box exec <service> cat ~/.ssh/git-signing.pub`), or use
+   `gh ssh-key add <file> --type signing` (needs the
    `admin:ssh_signing_key` scope: `gh auth refresh -s admin:ssh_signing_key`).
 
 Each home has its own key, so register one per box you run. Until a key is registered,

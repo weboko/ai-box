@@ -5,6 +5,38 @@ set -euo pipefail
 # <host>-claude / <host>-codex / <host>-box. BOX_HOST in .env or the environment wins.
 cd "$(dirname "$0")"
 
+# Windows: run from a WSL shell with the repo on WSL's own filesystem. The bind-mounted homes
+# need symlinks, Unix sockets and 0600 key permissions, which Windows drives don't provide.
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*)
+    echo "box: run ./box from a WSL shell, with the repo cloned inside WSL (e.g. ~/ai-box)." >&2
+    exit 1
+    ;;
+esac
+if grep -qis microsoft /proc/version; then
+  if [[ "$(pwd -P)" =~ ^/mnt/[a-zA-Z](/|$) ]]; then
+    echo "box: $(pwd -P) is on a Windows drive, where the boxes' homes can't hold symlinks," \
+      "sockets or private keys. Clone the repo inside WSL instead: git clone <url> ~/ai-box" >&2
+    exit 1
+  fi
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "box: docker not found. In Docker Desktop, turn on Settings > Resources >" \
+      "WSL integration for this distro." >&2
+    exit 1
+  fi
+fi
+
+# A CRLF checkout (Git for Windows' default) leaves the scripts the boxes run unrunnable.
+shopt -s nullglob
+crlf="$(grep -lI $'\r' -- *.sh box context/skills/*/bin/*.sh context/skills/*/scripts/*.sh || true)"
+shopt -u nullglob
+if [ -n "$crlf" ]; then
+  echo "box: these scripts have Windows (CRLF) line endings and would fail in the box:" >&2
+  echo "$crlf" | sed 's/^/  /' >&2
+  echo "box: fix with: perl -pi -e 's/\\r\$//' $(echo $crlf)" >&2
+  exit 1
+fi
+
 # Exporting it when .env sets it would shadow .env, which Compose ranks below the shell.
 if [ -z "${BOX_HOST:-}" ] && ! grep -qs '^BOX_HOST=' .env; then
   # Hostnames allow only letters, digits and hyphens.

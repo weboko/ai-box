@@ -1,0 +1,6 @@
+# Scripts run inside Linux containers; a CRLF checkout (Git for Windows defaults to
+# core.autocrlf=true) breaks them with "bash\r: No such file". Keep everything LF.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.woff2 binary
