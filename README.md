@@ -9,36 +9,6 @@ The prefix is `hostname -s`; set `BOX_HOST` in `.env` to override it. Plain `doc
 still works, but names the boxes `local-*`. Existing containers pick up a new name only when
 recreated (`./box up -d --force-recreate`).
 
-## Windows (WSL2 + Docker Desktop)
-
-Run everything from a WSL shell. The commands in this README then work unchanged.
-
-1. Install WSL with Ubuntu (`wsl --install -d Ubuntu`) and Docker Desktop with the WSL 2
-   backend. In Docker Desktop, turn on Settings → Resources → WSL integration → Ubuntu, and
-   Settings → General → "Start Docker Desktop when you sign in". The boxes restart with
-   Docker (`restart: unless-stopped`), so they come back after a reboot.
-2. In the Ubuntu shell, clone with WSL's own git, into WSL's filesystem:
-   `git clone <url> ~/ai-box && cd ~/ai-box`. Do not use `/mnt/c/...`: the boxes' homes are
-   bind-mounted from the repo and need symlinks, Unix sockets and private key permissions,
-   which Windows drives don't provide. `./box` refuses to run there, and also refuses when
-   scripts have Windows (CRLF) line endings.
-3. The box name defaults to the Windows computer name (e.g. `DESKTOP-ABC123-claude`). Set
-   `BOX_HOST` in `.env` to choose another.
-
-On the WSL side, files the boxes write into `claude-box/`, `codex-box/` and `ai-box/` are
-owned by root: use `sudo` to read or delete them, or go through the box
-(`./box exec claude cat ~/...`). From Windows Explorer the repo is at
-`\\wsl$\Ubuntu\home\<you>\ai-box`.
-
-All boxes share the WSL VM, which gets half the machine's RAM by default. If `~/prime.sh`
-or large builds get killed, raise it in `%UserProfile%\.wslconfig`, then run
-`wsl --shutdown` and restart Docker Desktop:
-
-```ini
-[wsl2]
-memory=24GB
-```
-
 ## Claude
 
 | | |
@@ -247,3 +217,60 @@ and an API key overrides the stored login. Likewise leave out `OPENAI_API_KEY`: 
 remote control needs the ChatGPT login.
 
 Changes to `.env` need a recreate, not a restart: `./box up -d --force-recreate claude`.
+
+## Windows (WSL2 + Docker Desktop)
+
+Run everything from a WSL shell. The commands in this README then work unchanged.
+
+1. Install WSL with Ubuntu (`wsl --install -d Ubuntu`) and Docker Desktop with the WSL 2
+   backend. In Docker Desktop, turn on Settings → Resources → WSL integration → Ubuntu, and
+   Settings → General → "Start Docker Desktop when you sign in". The boxes restart with
+   Docker (`restart: unless-stopped`), so they come back after a reboot.
+2. In the Ubuntu shell, clone with WSL's own git, into WSL's filesystem:
+   `git clone <url> ~/ai-box && cd ~/ai-box`. Do not use `/mnt/c/...`: the boxes' homes are
+   bind-mounted from the repo and need symlinks, Unix sockets and private key permissions,
+   which Windows drives don't provide. `./box` refuses to run there, and also refuses when
+   scripts have Windows (CRLF) line endings.
+3. The box name defaults to the Windows computer name (e.g. `DESKTOP-ABC123-claude`). Set
+   `BOX_HOST` in `.env` to choose another.
+
+On the WSL side, files the boxes write into `claude-box/`, `codex-box/` and `ai-box/` are
+owned by root: use `sudo` to read or delete them, or go through the box
+(`./box exec claude cat ~/...`). From Windows Explorer the repo is at
+`\\wsl$\Ubuntu\home\<you>\ai-box`.
+
+All boxes share the WSL VM, which gets half the machine's RAM by default. If `~/prime.sh`
+or large builds get killed, raise it in `%UserProfile%\.wslconfig`, then run
+`wsl --shutdown` and restart Docker Desktop:
+
+```ini
+[wsl2]
+memory=24GB
+```
+
+### How Docker reaches WSL
+
+Docker Desktop runs the Docker engine in its own WSL distro (`docker-desktop`). It installs
+nothing inside Ubuntu: with WSL integration on, it links `docker` and `docker compose` into
+Ubuntu, and they talk to that engine. Images and containers built from Ubuntu therefore show
+up in the Docker Desktop window, and the containers keep running after the Ubuntu terminal
+closes. The link only works while Docker Desktop is running with integration on for the
+distro you are in.
+
+`The command 'docker' could not be found in this WSL 2 distro` means the link is broken:
+integration is off for this distro, or Docker Desktop restarted (after an update or
+"Apply & restart") while this terminal was open. Fix it:
+
+1. Docker Desktop → Settings → Resources → WSL integration: turn on the distro you use
+   (e.g. Ubuntu) → Apply & restart.
+2. In PowerShell: `wsl --shutdown`, then open a new Ubuntu terminal.
+3. Check: `docker version` shows both Client and Server.
+
+If it still fails, `wsl -l -v` (PowerShell) should list your distro with VERSION 2, and
+`readlink -f "$(command -v docker)"` (Ubuntu) should point into
+`/mnt/wsl/docker-desktop/`. A command that failed this way did nothing, so re-run it,
+including any `./box up -d --force-recreate` meant to pick up `.env` changes.
+
+Edit `.env` from Ubuntu or through `\\wsl$`, and check its name with `ls -la .env*`:
+Windows hides extensions, so a file made in Explorer can end up as `.env.txt`, which the
+boxes silently ignore.
