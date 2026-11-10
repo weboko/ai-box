@@ -148,7 +148,7 @@ Everything in `context/` is mounted read-only into every box and wired up to bot
 Skills so far:
 
 - `create-report`: turns a finished investigation into an interactive HTML report in one of
-  seven templates (longread, paper, notebook, cockpit, roadmap, blueprint, atlas) and
+  eight templates (longread, dossier, paper, notebook, cockpit, roadmap, blueprint, atlas) and
   publishes it to `~/www` (see "Web server and tunnel"). The agent picks a template and
   says which; reply with another template's name to switch. `~/www/report-formats/` shows
   every template rendering the same example report.

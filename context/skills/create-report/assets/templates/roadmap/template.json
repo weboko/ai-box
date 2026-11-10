@@ -1,5 +1,5 @@
 {
-  "order": 5,
+  "order": 6,
   "title": "Growth Roadmap",
   "pitch": "The decision as a schedule: a sticky time ruler with named eras and a scrubber that runs a growth model through Gantt-style swimlanes of milestones, charts and pinnable cards.",
   "bestFor": "Answers that depend on when: growth thresholds, dated evidence, price or vendor changes, phased plans with re-evaluation gates.",

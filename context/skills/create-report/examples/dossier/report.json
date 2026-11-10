@@ -1,0 +1,11 @@
+{
+  "title": "Is E2B Pro ready to be our sandbox platform?",
+  "slug": "example-dossier",
+  "date": "2026-10-18",
+  "tldr": "Yes for a two-person team today, unless you need GPUs or data residency: E2B Pro meets the isolation, session and cost needs at ~$481 a month for 2,000 sandbox-hours, and its 100-sandbox concurrency cap, not price, is the first wall.",
+  "tags": ["agent-sandboxes", "e2b", "modal", "readiness review", "build-vs-buy"],
+  "notes": "Prices accessed 2026-10-18; FX assumption 1 EUR = 1.16 USD; reference sandbox 2 vCPU / 4 GiB",
+  "model": "claude-opus-5-5",
+  "agent": "Claude Code",
+  "template": "dossier"
+}

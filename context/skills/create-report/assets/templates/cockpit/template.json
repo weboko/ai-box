@@ -1,5 +1,5 @@
 {
-  "order": 4,
+  "order": 5,
   "title": "Cockpit",
   "pitch": "A live dashboard on a light datasheet: global condition sliders recompute every tile, and each tile opens a drawer with Summary, Evidence and Derivation.",
   "bestFor": "Quantitative decisions with a live model, where readers change assumptions and check one number's derivation at a time (build-vs-buy, pricing, capacity planning, business cases).",

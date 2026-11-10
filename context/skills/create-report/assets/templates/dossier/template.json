@@ -1,0 +1,32 @@
+{
+  "order": 2,
+  "title": "Dossier",
+  "pitch": "A one-screen brief on top (the answer, what to know, numbers you can quote, what not to claim), an itemised register of judged items you can filter and group, and an outbox of ready-to-send messages.",
+  "bestFor": "Reviews against a checklist (milestones, requirements, readiness), audits and test runs with many separate findings, follow-up rounds where status changes, and research that other people will act on or repeat in conversations.",
+  "weakness": "The argument lives in short summaries, not flowing prose; an investigation whose value is one continuous line of reasoning reads better as a Longread.",
+  "aliases": [
+    "dossier",
+    "brief",
+    "briefing",
+    "one-pager",
+    "register",
+    "scorecard",
+    "checklist",
+    "status report",
+    "audit report",
+    "test report",
+    "review report"
+  ],
+  "signals": [
+    "the reader was given a list to check against (milestone, RFP, requirements, roadmap)",
+    "the result is 6 or more separate items that each need a status or a fix",
+    "a follow-up round of an earlier review: what changed",
+    "the reader will forward it or speak for it (a reply, an email, a partner call)",
+    "numbers that are easy to misquote"
+  ],
+  "avoid": [
+    "one argument read top to bottom (longread)",
+    "a model the reader re-runs (notebook, cockpit)",
+    "the answer depends on when (roadmap)"
+  ]
+}

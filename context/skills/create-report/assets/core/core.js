@@ -6,6 +6,8 @@
    - evidence marks (.ev[data-ev]): labels, estimate notes, legend
    - metadata from report.json ([data-meta], .meta-panel)
    - layered figures (figure[data-levels] with data-from / data-to inside)
+   - the kit: .status/.entry tones, .tally counts, since-last-round deltas, .message copy
+     buttons, Markdown export of a .register
    - helpers for templates: Report.on, Report.hook, Report.observeResize, Report.util
    Load order (all defer): core.js, charts.js, model.js (optional), template.js. */
 (function () {
@@ -745,6 +747,174 @@
     });
   }
 
+  /* ---------- kit: judged items, tallies, outbox (references/core.md "Kit") ---------- */
+  // Status words → tone + label. Tones drive colour and symbol; the word is always shown.
+  var STATUS = {
+    met: ["good", "Met"], pass: ["good", "Pass"], done: ["good", "Done"], go: ["good", "Go"], fixed: ["good", "Fixed"], ok: ["good", "OK"],
+    partial: ["warn", "Partial"], open: ["warn", "Open"], conditional: ["warn", "Conditional"], "at-risk": ["warn", "At risk"], pending: ["warn", "Pending"],
+    missing: ["bad", "Missing"], fail: ["bad", "Fail"], blocked: ["bad", "Blocked"], "no-go": ["bad", "No-go"], broken: ["bad", "Broken"],
+    na: ["none", "N/A"], skipped: ["none", "Skipped"], unknown: ["none", "Unknown"], wontfix: ["none", "Won't fix"],
+    "new": ["info", "New"], info: ["info", "Info"]
+  };
+  var TONE_RANK = { bad: 1, warn: 2, good: 3 };
+  var TONE_ORDER = ["good", "warn", "bad", "none", "info"];
+  function statusOf(key) {
+    key = String(key || "").toLowerCase().trim();
+    var s = STATUS[key];
+    return { key: key, tone: s ? s[0] : "none", label: s ? s[1] : (key ? key.charAt(0).toUpperCase() + key.slice(1) : "") };
+  }
+  function entryLabel(entry) {
+    return entry.getAttribute("data-status-label") || statusOf(entry.getAttribute("data-status")).label;
+  }
+  // The word for a status in a set of entries: their own data-status-label when they agree on one.
+  function labelFor(entries, key) {
+    var labels = entries.filter(function (e) { return e.getAttribute("data-status") === key; }).map(entryLabel);
+    return labels.length && labels.every(function (l) { return l === labels[0]; }) ? labels[0] : statusOf(key).label;
+  }
+  function initKit() {
+    $$(".status[data-status]").forEach(function (n) {
+      var st = statusOf(n.getAttribute("data-status"));
+      n.setAttribute("data-tone", st.tone);
+      if (!n.textContent.trim()) n.textContent = st.label;
+    });
+    $$(".entry[data-status]").forEach(function (entry) {
+      var st = statusOf(entry.getAttribute("data-status"));
+      entry.setAttribute("data-tone", st.tone);
+      var head = $(".entry-head", entry);
+      if (head && !$(".status", head)) {
+        head.appendChild(el("span", { class: "status", "data-status": st.key, "data-tone": st.tone }, entryLabel(entry)));
+      }
+      var wasKey = entry.getAttribute("data-was");
+      if (head && wasKey && wasKey !== st.key && !$(".delta", head)) {
+        var was = statusOf(wasKey), dir = "change", text;
+        if (was.key === "new") { dir = "new"; text = "✦ New this round"; }
+        else {
+          var a = TONE_RANK[was.tone] || 0, b = TONE_RANK[st.tone] || 0;
+          if (a && b && b > a) dir = "up"; else if (a && b && b < a) dir = "down";
+          text = (dir === "up" ? "▲ " : dir === "down" ? "▼ " : "↺ ") + "was " + was.label;
+        }
+        entry.setAttribute("data-delta", dir);
+        var d = el("span", { class: "delta", "data-dir": dir, title: "Status at the previous round: " + (was.key === "new" ? "not listed" : was.label) }, text);
+        var pill = $(".status", head);
+        pill.parentNode.insertBefore(d, pill);
+      }
+    });
+    $$(".tally[data-of]").forEach(function (t) { t.innerHTML = ""; tally(t, $$(".entry[data-status]", $(t.getAttribute("data-of")) || doc)); });
+    $$(".message").forEach(function (m) {
+      if ($(".message-meta", m)) return;
+      var bar = el("p", { class: "message-meta" });
+      var to = m.getAttribute("data-to"), via = m.getAttribute("data-via");
+      if (to) { bar.appendChild(doc.createTextNode("To ")); bar.appendChild(el("b", null, to)); }
+      if (via) bar.appendChild(el("span", null, "via " + via));
+      var body = $(".message-body", m) || m;
+      bar.appendChild(copyButton(function () {
+        var c = body.cloneNode(true);
+        $$("a.cite, .ev-note-btn, .ev-note", c).forEach(function (x) { x.remove(); });
+        doc.body.appendChild(c); c.style.cssText = "position:absolute;left:-9999px;white-space:normal";
+        var t = c.innerText.trim(); c.remove(); return t;   // innerText keeps paragraph breaks
+      }, "Copy message"));
+      m.insertBefore(bar, m.firstChild);
+    });
+    $$(".register[data-export]").forEach(function (reg) {
+      if (reg.previousElementSibling && reg.previousElementSibling.classList.contains("export-bar")) return;
+      var bar = el("p", { class: "export-bar" });
+      bar.appendChild(copyButton(function () { return toMarkdown(reg); }, reg.getAttribute("data-export") || "Copy as Markdown checklist"));
+      reg.parentNode.insertBefore(bar, reg);
+    });
+  }
+  // Fill a ul.tally with one li per status present (tone order), plus a since-last-round line.
+  // data-by="tone" counts by tone instead (✓ / ◐ / ✗ / – / ✦), worded by data-labels
+  // ("good:met, warn:partial, bad:not met") or the most common status label in each tone.
+  function tally(ul, entries) {
+    var byTone = ul.getAttribute("data-by") === "tone";
+    var words = {};
+    (ul.getAttribute("data-labels") || "").split(",").forEach(function (pair) {
+      var i = pair.indexOf(":");
+      if (i > 0) words[pair.slice(0, i).trim()] = pair.slice(i + 1).trim();
+    });
+    var counts = {}, deltas = { up: 0, down: 0, "new": 0, change: 0 };
+    entries.forEach(function (e) {
+      var k = e.getAttribute("data-status");
+      if (byTone) k = statusOf(k).tone;
+      counts[k] = (counts[k] || 0) + 1;
+      var d = e.getAttribute("data-delta");
+      if (d) deltas[d]++;
+    });
+    function toneOf(k) { return byTone ? k : statusOf(k).tone; }
+    function wordFor(k) {
+      if (!byTone) return labelFor(entries, k);
+      if (words[k]) return words[k];
+      var tally = {};
+      entries.forEach(function (e) { if (statusOf(e.getAttribute("data-status")).tone === k) { var l = entryLabel(e); tally[l] = (tally[l] || 0) + 1; } });
+      return Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; })[0] || k;
+    }
+    Object.keys(counts).sort(function (a, b) {
+      return TONE_ORDER.indexOf(toneOf(a)) - TONE_ORDER.indexOf(toneOf(b));
+    }).forEach(function (k) {
+      var li = el("li", { "data-status": byTone ? null : k, "data-tone": toneOf(k) });
+      li.appendChild(el("b", null, String(counts[k])));
+      li.appendChild(doc.createTextNode(" " + wordFor(k).toLowerCase()));
+      ul.appendChild(li);
+    });
+    var parts = [];
+    if (deltas.up) parts.push("▲ " + deltas.up + " improved");
+    if (deltas.down) parts.push("▼ " + deltas.down + " worse");
+    if (deltas["new"]) parts.push("✦ " + deltas["new"] + " new");
+    if (deltas.change) parts.push("↺ " + deltas.change + " changed");
+    if (parts.length) {
+      var since = ul.getAttribute("data-since");
+      ul.appendChild(el("li", { class: "tally-delta", "data-tone": "info" }, parts.join(" · ") + (since ? " since " + since : "")));
+    }
+    return counts;
+  }
+  // Text of a node without citation numbers, estimate-note buttons or kit labels.
+  function plainText(node) {
+    if (!node) return "";
+    var c = node.cloneNode(true);
+    $$("a.cite, .ev-note-btn, .ev-note, .entry-toggle", c).forEach(function (x) { x.remove(); });
+    return (c.textContent || "").replace(/\s+/g, " ").trim();
+  }
+  function toMarkdown(reg) {
+    return $$(".entry", reg).filter(function (e) { return !e.hidden; }).map(function (e) {
+      var st = statusOf(e.getAttribute("data-status"));
+      var id = $(".entry-id", e), title = $(".entry-title", e), sum = $(".entry-sum", e);
+      var was = e.getAttribute("data-was");
+      var line = "- [" + (st.tone === "good" ? "x" : " ") + "] **" + (id ? plainText(id) + " · " : "") +
+        plainText(title) + "** — " + entryLabel(e) +
+        (was && was !== st.key ? " (was " + statusOf(was).label + ")" : "") + (sum ? ". " + plainText(sum) : "");
+      $$(".entry-fields > div", e).forEach(function (row) {
+        var dt = $("dt", row), dd = $("dd", row);
+        if (dt && dd) line += "\n  - " + plainText(dt) + ": " + plainText(dd);
+      });
+      return line;
+    }).join("\n");
+  }
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (resolve, reject) {
+      var ta = el("textarea", { readonly: "", style: "position:fixed;top:-1000px;opacity:0" });
+      ta.value = text;
+      doc.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = doc.execCommand("copy"); } catch (e) { ok = false; }
+      ta.remove();
+      if (ok) resolve(); else reject(new Error("copy failed"));
+    });
+  }
+  function copyButton(getText, label) {
+    var b = el("button", { type: "button", class: "copy-btn" }, label || "Copy");
+    b.addEventListener("click", function () {
+      copyText(getText()).then(function () {
+        b.textContent = "Copied ✓";
+        b.classList.add("is-done");
+      }, function () { b.textContent = "Select and copy by hand"; }).then(function () {
+        setTimeout(function () { b.textContent = label || "Copy"; b.classList.remove("is-done"); }, 2200);
+      });
+    });
+    return b;
+  }
+
   /* ---------- opening hidden targets (details, levels) when a link points into them ---------- */
   var revealers = [];
   // Templates register fn(target) → true if they revealed it (e.g. switched page or level).
@@ -828,6 +998,7 @@
     numberCitations();
     api.evidenceUsed = initEvidence();
     initNotes();
+    initKit();
     initLevels();
     initBoxes();
     initZoom();
@@ -885,6 +1056,7 @@
     observeResize: observeResize,
     get meta() { return meta; },
     reduceMotion: reduceMotion,
+    kit: { STATUS: STATUS, statusOf: statusOf, labelFor: labelFor, tally: tally, toMarkdown: toMarkdown, plainText: plainText, copy: copyText, copyButton: copyButton },
     util: { $: $, $$: $$, el: el, esc: esc, cssVar: cssVar, slugify: slugify, get: get, niceDate: niceDate }
   };
   window.Report = api;
