@@ -39,6 +39,16 @@ Visual: line chart of cost vs hours (series: E2B, Modal, self-host), marker at t
 Side 1: … {S:src-a}   Side 2: … {S:src-b}
 Conclusion: … with the arithmetic or reasoning. {I}
 
+## Register            (when items are judged one by one: requirements, findings, scenarios)
+- ID · Title · status (met/partial/missing/…) · was: <status at the previous round, if any> · area · severity
+  Summary: one line. Fields: Asked / Found / Closes it (or Expected / Actual / Repro). {S:…}
+
+## Hand-off            (when the reader will act on it or repeat it to others)
+Quotables: number — what it measures {S:…} — caveat: how not to misquote it
+Don't claim: "tempting claim" — why not
+Ask next: whom — the question that settles an open item
+Outbox: to · via · subject · the message, in the reader's voice
+
 ## Recommendation / Risks / Next steps   (when the user is deciding)
 
 ## Model               (only if there is one: becomes site/assets/model.js)
@@ -73,5 +83,6 @@ While writing the brief, notice the shape of the content:
 - Does the answer depend on when?
 - Are there many distinct parts whose relationships matter?
 - Is it an argument to read top to bottom?
+- Is the result a set of items that each get a status, or will the reader forward it?
 
 These signals pick the template (see `choosing.md`).

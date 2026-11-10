@@ -21,6 +21,7 @@ already know from how they ask. Everything in `site/` is public on the internet.
 | Template | Shape it fits |
 |---|---|
 | `longread` (default) | An argument read top to bottom: memo, analysis, explainer, comparison |
+| `dossier` | Items to judge (review against a list, audit, test run, follow-up round) or research others will forward: brief + register + outbox |
 | `paper` | Readers who each want a different depth (Abstract → Appendix), derivations, equations |
 | `notebook` | A model the reader should audit and re-run, cell by cell |
 | `cockpit` | A live decision model: global sliders recompute every tile |
@@ -109,6 +110,9 @@ the URL of the gallery, which shows each template rendering the same example rep
   - levels for zooming from overview to internals.
 
   Defaults come from the investigation, and the formula stays visible.
+- **Hand-offs.** When the reader will act on the report or speak for it, give them the
+  pieces: a verdict, the numbers they can quote with caveats, the claims not to make, and
+  ready-to-send messages (the kit in `core.md`; `dossier` is built around it).
 - **Evidence transparency.**
   - Cite claims with `a.cite` links to Sources.
   - Tag the claims a decision rests on: sourced fact, estimate, assumption,

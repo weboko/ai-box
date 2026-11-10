@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="TEMPLATE-TODO one neutral sentence: what this report is about.">
+<script>document.documentElement.className += " js";</script>
+<link rel="stylesheet" href="assets/core/core.css">
+<link rel="stylesheet" href="assets/template/template.css">
+<!-- <link rel="stylesheet" href="assets/custom.css">   topic-specific styles, if any -->
+<script defer src="assets/core/core.js"></script>
+<script defer src="assets/core/charts.js"></script>
+<!-- <script defer src="assets/model.js"></script>   only if the report has a model -->
+<script defer src="assets/template/template.js"></script>
+<!-- <script defer src="assets/custom.js"></script>   topic-specific visuals, if any (after template.js) -->
+</head>
+<!-- data-short-title: the name shown in the sticky top bar (≤ 40 characters). -->
+<body id="top" data-short-title="TEMPLATE-TODO short title">
+<a class="skip" href="#tldr">Skip to the brief</a>
+<!-- Dossier (guide: references/templates/dossier.md; worked example: examples/dossier/index.html).
+     The engine builds the top bar with section tabs, section numbers, the register's filter /
+     group / expand / copy tools, entry toggles and the brief's print and copy buttons. You write
+     the brief, the entries and a little prose. Kit markup (status, entry, tally, quotables,
+     message): references/core.md "Kit". -->
+<main class="page" id="main">
+  <header class="masthead">
+    <p class="kicker"><span>TEMPLATE-TODO kind, e.g. Readiness review</span><span>as of <time data-meta="date" datetime="{{DATE}}">{{DATE}}</time></span></p>
+    <h1>{{TITLE}}</h1>
+    <p class="dek">TEMPLATE-TODO dek: one neutral sentence that frames the topic.</p>
+    <p class="byline"><span data-meta="reading-time"></span><span>The brief takes a minute; the register is for checking.</span></p>
+    <details class="meta"><summary>About this report</summary><div class="meta-panel"></div></details>
+    <p class="legend"><span class="legend-title">Reading the marks</span><span data-ev-legend></span></p>
+  </header>
+
+  <!-- THE BRIEF (L0). One screen: everything a reader who stops here needs. It must start with
+       class "tldr". Delete any block the investigation has nothing for, except the verdict. -->
+  <section class="tldr brief sec" id="tldr" data-title="Brief">
+    <h2>The brief</h2>
+    <div class="brief-grid">
+      <div class="brief-main">
+        <!-- data-verdict: go | conditional | hold | no-go | (none = neutral, for research without a decision) -->
+        <div class="verdict-card" data-verdict="conditional">
+          <p class="verdict-label">TEMPLATE-TODO The answer</p>
+          <p class="verdict-text">TEMPLATE-TODO the answer in one sentence (L0).</p>
+          <p>TEMPLATE-TODO the 2–3 sentences that qualify it (L1). <span class="ev" data-ev="fact">A sourced claim</span><a class="cite" href="#src-todo"></a>.</p>
+          <!-- Counted from the entries in #register; data-since names the previous round, if any. -->
+          <ul class="tally" data-of="#register" data-since="TEMPLATE-TODO round 1"></ul>
+        </div>
+        <div class="know">
+          <h3>Know this</h3>
+          <ol class="know-list">
+            <li><strong>TEMPLATE-TODO point.</strong> One sentence of why it matters, tagged and cited.</li>
+          </ol>
+        </div>
+      </div>
+      <aside class="brief-side">
+        <!-- Routes: who should read what. One line per kind of reader; link into the dossier. -->
+        <div class="routes">
+          <h3>Read next</h3>
+          <ul>
+            <li><a href="#register"><b>TEMPLATE-TODO reader</b>TEMPLATE-TODO what they'll find</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+    <!-- Numbers someone will repeat. Each one carries the caveat that keeps it honest. -->
+    <h3>Numbers you can quote</h3>
+    <dl class="quotables">
+      <div><dt>TEMPLATE-TODO 0.3–0.7 s</dt><dd>TEMPLATE-TODO what it measures, from where<a class="cite" href="#src-todo"></a>. <em class="caveat">TEMPLATE-TODO how not to misquote it.</em></dd></div>
+    </dl>
+    <div class="brief-pair">
+      <div><h3>Don't claim</h3><ul class="dont"><li>TEMPLATE-TODO a claim the evidence doesn't support, and why.</li></ul></div>
+      <div><h3>Ask next</h3><ul class="asks"><li>TEMPLATE-TODO the question that would settle an open item, and whom to ask.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- THE REGISTER (L1 → L2). One .entry per judged item: a criterion, a finding, a test
+       scenario. Head + one-line summary always show; everything after them is the L2 body
+       that opens in place (blocking entries start open). data-export adds "Copy as Markdown". -->
+  <section class="sec" id="register" data-title="Register">
+    <h2>TEMPLATE-TODO register heading, e.g. Requirements, one by one</h2>
+    <p class="lede">TEMPLATE-TODO what the register adds up to, in one line.</p>
+    <div class="register" data-export>
+      <!-- data-status: met pass done go fixed · partial open conditional at-risk pending ·
+           missing fail blocked no-go broken · na skipped unknown wontfix · new info
+           data-was: status at the previous round (or "new"); data-sev: critical high medium low info;
+           data-area: a short facet for "Group by area". -->
+      <article class="entry" id="e-todo" data-status="partial" data-area="TEMPLATE-TODO area" data-sev="medium">
+        <header class="entry-head"><span class="entry-id">R1</span><h3 class="entry-title">TEMPLATE-TODO the item, as a noun phrase</h3></header>
+        <p class="entry-sum">TEMPLATE-TODO the finding in one sentence.</p>
+        <ul class="entry-tags"><li class="loc"><code>TEMPLATE-TODO path/file.rs:120</code></li></ul>
+        <dl class="entry-fields">
+          <div><dt>Asked</dt><dd>TEMPLATE-TODO what the requirement says, cited.</dd></div>
+          <div><dt>Found</dt><dd>TEMPLATE-TODO what is actually there, tagged and cited.</dd></div>
+          <div><dt>Closes it</dt><dd>TEMPLATE-TODO the concrete action, and who owns it.</dd></div>
+        </dl>
+        <!-- L3: <details class="deeper"><summary>Test output</summary><pre>…</pre></details> -->
+      </article>
+    </div>
+  </section>
+
+  <!-- Prose sections: method, decisions, risks, next steps. Optional; delete what has nothing.
+       Shared blocks (ol.recs, ul.risks, ol.next, .reconcile, tables, charts) are styled here. -->
+  <section class="sec" id="method" data-title="How it was checked">
+    <h2>How it was checked</h2>
+    <p class="lede">TEMPLATE-TODO the method in one line, and what it can't see.</p>
+    <p>TEMPLATE-TODO what was run, read and compared; what was out of reach.</p>
+  </section>
+
+  <section class="sec" id="next" data-title="Next steps">
+    <h2>Next steps</h2>
+    <p class="lede">TEMPLATE-TODO the next move, in one line.</p>
+    <ol class="recs">
+      <li data-priority="high"><strong>TEMPLATE-TODO do this.</strong> Why, and what it depends on.</li>
+    </ol>
+  </section>
+
+  <!-- THE OUTBOX: messages the reader can send as they are. data-to / data-via label them;
+       the engine adds Copy. Write them in the voice of the reader, not of the report. -->
+  <section class="sec" id="outbox" data-title="Outbox">
+    <h2>Outbox</h2>
+    <p class="lede">TEMPLATE-TODO what is ready to send, in one line.</p>
+    <article class="message" data-to="TEMPLATE-TODO recipient" data-via="TEMPLATE-TODO channel">
+      <h3>TEMPLATE-TODO subject</h3>
+      <div class="message-body">
+        <p>TEMPLATE-TODO the message.</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="sec" id="sources" data-title="Sources">
+    <h2>Sources</h2>
+    <ol class="sources">
+      <li id="src-todo"><a href="https://example.com/">TEMPLATE-TODO Publisher — Title</a>, accessed {{DATE}}.</li>
+    </ol>
+  </section>
+
+  <footer class="colophon">
+    <p>Set in Fraunces, Figtree and Atkinson Hyperlegible Mono (SIL Open Font License). <a href="#top">↑ Back to top</a></p>
+  </footer>
+</main>
+</body>
+</html>

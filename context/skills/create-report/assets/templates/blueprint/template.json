@@ -1,5 +1,5 @@
 {
-  "order": 6,
+  "order": 7,
   "title": "Blueprint",
   "pitch": "The report as one zoomable engineering drawing: zoom out for labelled regions, in for summaries, closer for full detail.",
   "bestFor": "Research where the relationships between parts are the point (system architectures, build-vs-buy, ecosystem maps), for readers who explore rather than read top to bottom.",

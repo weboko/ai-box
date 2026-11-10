@@ -1,5 +1,5 @@
 {
-  "order": 3,
+  "order": 4,
   "title": "Notebook",
   "pitch": "A Jupyter-style lab notebook: markdown cells argue, code cells show each number and its derivation, one params cell re-runs everything.",
   "bestFor": "Quantitative research the reader should audit and re-run: cost models, sizing, benchmarks, forecasts.",

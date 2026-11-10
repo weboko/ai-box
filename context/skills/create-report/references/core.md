@@ -13,7 +13,8 @@ JavaScript. JavaScript is for `model.js` and custom visuals.
 - [Evidence](#evidence) · [Citations and sources](#citations-and-sources) · [Metadata](#metadata)
 - [Model and controls](#model-and-controls) · [Live values](#live-values)
 - [Charts](#charts) · [Box diagram](#box-diagram) · [Layered figure](#layered-figure)
-- [Photo](#photo) · [Table](#table) · [Shared blocks](#shared-blocks) · [Custom visuals and scripts](#custom-visuals-and-scripts)
+- [Photo](#photo) · [Table](#table) · [Shared blocks](#shared-blocks) · [Kit: judged items and hand-offs](#kit-judged-items-and-hand-offs)
+- [Custom visuals and scripts](#custom-visuals-and-scripts)
 
 ## Evidence
 Mark the claims a decision rests on, not every sentence.
@@ -236,6 +237,92 @@ Semantic markup that every template styles its own way. Use the blocks that earn
 <ol class="next"><li><strong>Action.</strong> What it settles.</li></ol>
 <aside class="callout" data-kind="note|key|warn|tip">…</aside>
 ```
+
+## Kit: judged items and hand-offs
+Pieces for reports that rate things (requirements, findings, test scenarios) and for readers
+who will pass the result on. They work in every template; `dossier` is built around them.
+Every status shows a symbol **and** a word, never colour alone.
+
+**Status and severity labels**
+```html
+<span class="status" data-status="met"></span>            <!-- empty: core writes "Met" -->
+<span class="status" data-status="partial">Draft only</span>
+<span class="sev" data-sev="high">High</span>
+```
+| Tone | Symbol | `data-status` words |
+|---|---|---|
+| good | ✓ | `met` `pass` `done` `go` `fixed` `ok` |
+| warn | ◐ | `partial` `open` `conditional` `at-risk` `pending` |
+| bad | ✗ | `missing` `fail` `blocked` `no-go` `broken` |
+| none | – / ? | `na` `skipped` `unknown` `wontfix` |
+| info | ✦ | `new` `info` |
+
+`data-sev`: `critical` `high` `medium` `low` `info`. Pick the status word the reader would
+use; put your own wording in the label (`data-status-label` on an entry) and keep the
+`data-status` that gives the right tone.
+
+**Entry: one judged item**
+```html
+<div class="register" data-export>                 <!-- data-export: "Copy as Markdown checklist" -->
+  <article class="entry" id="sr1" data-status="fixed" data-status-label="Resolved"
+           data-was="open" data-sev="critical" data-area="Spec">
+    <header class="entry-head"><span class="entry-id">SR1</span><h3 class="entry-title">Flash-loan repayment</h3></header>
+    <p class="entry-sum">One sentence: what was found.</p>
+    <ul class="entry-tags"><li class="loc"><code>src/lib.rs:120</code></li><li>spec</li></ul>
+    <dl class="entry-fields">
+      <div><dt>Asked</dt><dd>…</dd></div>
+      <div><dt>Found</dt><dd>… tagged and cited …</dd></div>
+      <div><dt>Closes it</dt><dd>…</dd></div>
+    </dl>
+  </article>
+</div>
+```
+- Core adds the status label to `.entry-head` when it has none, and sets `data-tone` on the entry.
+- `data-was` = the status at the previous round. When it differs, core adds a delta label
+  ("▲ was Open", "▼ was Met", "↺ was …"); `data-was="new"` marks an item new this round.
+  Only write `data-was` for a follow-up round, and only with the real earlier status.
+- `data-area` and `data-sev` are facets: `dossier` groups by them. Keep them short.
+- Field names are yours (`Asked / Found / Closes it`, `Expected / Actual / Repro`,
+  `Risk / Fix / Effort`); keep them the same across one register.
+
+**Tally: counts at a glance**
+```html
+<p class="tally-label">Deliverables</p>           <!-- optional caption -->
+<ul class="tally" data-of="#register" data-since="round 2"></ul>
+<ul class="tally" data-of="#gate" data-by="tone" data-labels="good:met, warn:partial, bad:not met"></ul>
+```
+Core counts the entries inside `data-of`, one pill per status (or per tone with
+`data-by="tone"`), plus "▲ 3 improved · ✦ 1 new since round 2" when entries carry `data-was`.
+A hand-written tally works too: `<li data-tone="good"><b>7</b> met</li>`.
+
+**Verdict card: the answer as a judgement**
+```html
+<div class="verdict-card" data-verdict="go|conditional|hold|no-go">
+  <p class="verdict-label">Verdict · Go, with two exceptions</p>
+  <p class="verdict-text">The answer in one sentence.</p>
+  <p>Two or three qualifying sentences.</p>
+</div>
+```
+
+**Briefing pieces: what the reader will repeat**
+```html
+<dl class="quotables">                              <!-- numbers people will quote, each with its caveat -->
+  <div><dt>0.3–0.7 s</dt><dd>What it measures<a class="cite" href="#src-x"></a>. <em class="caveat">How not to misquote it.</em></dd></div>
+</dl>
+<ul class="dont"><li>"A claim the evidence doesn't support." Why not.</li></ul>
+<ul class="asks"><li>Who: the question that would settle an open item.</li></ul>
+```
+
+**Outbox: messages ready to send**
+```html
+<article class="message" data-to="The team" data-via="PR comment">
+  <h3>Subject</h3>
+  <div class="message-body"><p>Written in the reader's voice, ready to paste.</p></div>
+</article>
+```
+Core adds a "To … via …" bar and a Copy button (copies the body as plain text, without
+citation numbers). JS: `Report.kit.statusOf(word)`, `.tally(ul, entries)`,
+`.toMarkdown(register)`, `.plainText(node)`, `.copy(text)`, `.copyButton(getText, label)`.
 
 ## Custom visuals and scripts
 If the topic needs something the core and the template don't have, build it in
